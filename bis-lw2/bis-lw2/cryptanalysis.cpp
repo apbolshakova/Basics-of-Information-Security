@@ -11,7 +11,11 @@
 #include <stdlib.h>
 #include <conio.h>
 
+#define SIZE_OF_STRING_TO_COPY 1000
+
 #define UNKNOWN_OPERATION_MESSAGE "Неизвестный код команды, попробуйте другой: "
+#define INVALID_DATA_MESSAGE "Полученные данные не подходят для расшифровки: отсутствуют буквы."
+#define DATA_PATH "input.txt"
 
 enum OperationCode 
 {
@@ -34,9 +38,36 @@ typedef struct Cryptogram
 	char* curLetter; //массив замен '','', b, '' -> A поменяли на b. Тогда откат - удаление элемента из этого массива
 } CRYPTOGRAM;
 
+void handleDataFromNewString(CRYPTOGRAM* data, char* str)
+{
+	//увеличить память в тексте
+	//скопировать текст в data, во время копирования выделять слова в word и буквы в srcLetter, выделять память в curLetter
+}
+
 CRYPTOGRAM* initCryptogram()
 {
-	return 0;
+	CRYPTOGRAM* data;
+	data->srcLetter = (char*) malloc(sizeof(char));
+	*(data->srcLetter) = 0;
+
+	FILE *f = fopen(DATA_PATH, "r");
+	if ((f != NULL) && (fscanf(f, "%s") != EOF))
+	{
+		fclose(f);
+		f = fopen(DATA_PATH, "r");
+		char* temp = (char*) malloc(SIZE_OF_STRING_TO_COPY, sizeof(char));
+		while (fgets(temp, sizeof(temp), f) != NULL)
+		{
+			handleDataFromNewString(data, temp);
+		}
+	}
+	fclose(f);
+	return data;
+
+	//прочитать текст в curText
+	//в массиве word получить слова
+	//наполнить srcLetter буквами или нулём
+	//выделить столько же памяти для curLetter и проинициализировать
 }
 
 void printMainMenu()
@@ -57,12 +88,12 @@ void suggestReplacementsBasingOnFrequencyAnalysis(CRYPTOGRAM* data)
 	//TODO
 }
 
-void printWordsOrderByLength(char** word)
+void printWordsInOrderByLength(char** word)
 {
 	//TODO
 }
 
-void printWordsOrderByUndeciphered(char** word)
+void printWordsInOrderByUndeciphered(char** word)
 {
 	//TODO
 }
@@ -90,7 +121,7 @@ void replaceLettersAutomatically(CRYPTOGRAM* data)
 
 void handleMainCycle(CRYPTOGRAM* data)
 {
-	OperationCode operationCode = NULL_OPERATION;
+	enum OperationCode operationCode = NULL_OPERATION;
 	do 
 	{
 		system("cls");
@@ -99,8 +130,8 @@ void handleMainCycle(CRYPTOGRAM* data)
 		switch (operationCode)
 		{
 		case ANALYZE: suggestReplacementsBasingOnFrequencyAnalysis(data); break;
-		case PRINT_WORDS_BY_LENGTH: printWordsOrderByLength(data->word); break;
-		case PRINT_WORDS_BY_UNDECIPHERED: printWordsOrderByUndeciphered(data->word); break;
+		case PRINT_WORDS_BY_LENGTH: printWordsInOrderByLength(data->word); break;
+		case PRINT_WORDS_BY_UNDECIPHERED: printWordsInOrderByUndeciphered(data->word); break;
 		case PRINT_BUF: printText(data->curText); break;
 		case REPLACE_LETTERS: handleReplacementMenu(data); break;
 		case REVERT: handleRevertMenu(data); break;
@@ -118,8 +149,11 @@ int main(void)
 	{
 		printf("Полученные данные не подходят для расшифровки: отсутствуют буквы.");
 		_getch();
-		return 0;
 	}
-	handleMainCycle(data);
+	else
+	{
+		handleMainCycle(data);
+	}
+	free(data);
 	return 0;
 }
