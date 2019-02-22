@@ -52,38 +52,38 @@ void printMainMenu()
 	printf("¬ведите код нужной команды: ");
 }
 
-void suggestReplacementsBasingOnFrequencyAnalysis(char* buf)
+void suggestReplacementsBasingOnFrequencyAnalysis(CRYPTOGRAM* data)
 {
 	//TODO
 }
 
-void printWordsOrderByLength(char* buf)
+void printWordsOrderByLength(char** word)
 {
 	//TODO
 }
 
-void printWordsOrderByUndeciphered(char* buf)
+void printWordsOrderByUndeciphered(char** word)
 {
 	//TODO
 }
 
-void printBuf(char* buf)
+void printText(char* text)
 {
 	//TODO
 }
 
-void handleReplacementMenu(char* buf)
+void handleReplacementMenu(CRYPTOGRAM* data)
 {
 	//TODO
 }
 
-void printHistoryAndRevertBuf(char* buf)
+void handleRevertMenu(CRYPTOGRAM* data)
 {
 	//TODO
 	//вывести список проведЄнных замен и предложить возможность отмены
 }
 
-void replaceLettersAutomatically(char* buf)
+void replaceLettersAutomatically(CRYPTOGRAM* data)
 {
 	//TODO
 }
@@ -93,21 +93,21 @@ void handleMainCycle(CRYPTOGRAM* data)
 	OperationCode operationCode = NULL_OPERATION;
 	do 
 	{
+		system("cls");
 		printMainMenu();
 		scanf("%i", &operationCode);
 		switch (operationCode)
 		{
-		case ANALYZE: suggestReplacementsBasingOnFrequencyAnalysis(buf); break;
-		case PRINT_WORDS_BY_LENGTH: printWordsOrderByLength(buf); break;
-		case PRINT_WORDS_BY_UNDECIPHERED: printWordsOrderByUndeciphered(buf); break;
-		case PRINT_BUF: printBuf(buf);  break;
-		case REPLACE_LETTERS: handleReplacementMenu(buf); break; //скорее всего замена нужна не одна за раз => отдельна€ менюшка
-		case REVERT: printHistoryAndRevertBuf(buf); break;
-		case AUTOREPLACEMENT: replaceLettersAutomatically(buf); break;
+		case ANALYZE: suggestReplacementsBasingOnFrequencyAnalysis(data); break;
+		case PRINT_WORDS_BY_LENGTH: printWordsOrderByLength(data->word); break;
+		case PRINT_WORDS_BY_UNDECIPHERED: printWordsOrderByUndeciphered(data->word); break;
+		case PRINT_BUF: printText(data->curText); break;
+		case REPLACE_LETTERS: handleReplacementMenu(data); break;
+		case REVERT: handleRevertMenu(data); break;
+		case AUTOREPLACEMENT: replaceLettersAutomatically(data); break;
 		case EXIT: break;
 		default: printf(UNKNOWN_OPERATION_MESSAGE);
 		}
-		printf("\n\n"); //дл€ отделени€ выполненных операций
 	} while (operationCode != EXIT);
 }
 
