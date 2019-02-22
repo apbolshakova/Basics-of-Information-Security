@@ -12,10 +12,13 @@
 #include <conio.h>
 
 #define SIZE_OF_STRING_TO_COPY 1000
+#define ALPHABET_SIZE 32
+#define NO_REPLACEMENT 0
+#define DATA_PATH "input.txt"
+#define LETTERS_IN_ORDER_BY_FREQUENCY_DESC "оеаинтсрвлкмдпуяыьгзбчйчжшюцщэфъ"
 
 #define UNKNOWN_OPERATION_MESSAGE "Неизвестный код команды, попробуйте другой: "
 #define INVALID_DATA_MESSAGE "Полученные данные не подходят для расшифровки: отсутствуют буквы."
-#define DATA_PATH "input.txt"
 
 enum OperationCode 
 {
@@ -30,44 +33,70 @@ enum OperationCode
 	EXIT 
 };
 
+typedef struct Letter
+{
+	char symbol;
+	int encounteredInSrcText; //сколько раз встретился в тексте - для высчитывания частоты
+	float frequencyInSrcText; //поссчитать при инициализации - в первом проходе
+	char replacedTo;
+} LETTER;
+
 typedef struct Cryptogram
 {
-	char* curText; //текст с текущими заменами для вывода
-	char** word; //массив элементов-слов для вывода
-	char* srcLetter; //массив исходных букв C, D, A, F для откатов
-	char* curLetter; //массив замен '','', b, '' -> A поменяли на b. Тогда откат - удаление элемента из этого массива
+	char* text; //текст с текущими заменами для вывода
+	LETTER* letter;
 } CRYPTOGRAM;
+
+void initLetters(CRYPTOGRAM* data)
+{
+	for (int i = 0; i < ALPHABET_SIZE; i++)
+	{
+		(data->letter + i)->symbol = 'А' + i;
+		(data->letter + i)->encounteredInSrcText = 0;
+		(data->letter + i)->frequencyInSrcText = 0;
+		(data->letter + i)->replacedTo = NO_REPLACEMENT;
+	}
+}
 
 void handleDataFromNewString(CRYPTOGRAM* data, char* str)
 {
-	//увеличить память в тексте
-	//скопировать текст в data, во время копирования выделять слова в word и буквы в srcLetter, выделять память в curLetter
+	int sizeOfOldText = sizeof(data->text); //можно ли по-другому
+	data->text = (char*) realloc(data->text, sizeOfOldText + SIZE_OF_STRING_TO_COPY * sizeof(char));
+
+	char* item = data->text + sizeOfOldText - 1; //адрес, начиная с которого дописывать новые символы
+	int numOfUniqueLetters = 0;
+	while (*str)
+	{
+		*item = *str;
+		if (isLetter(*item))
+		{
+			//если текущий символ - буква, то нужной букве из Letters увеличить счётчик вхождений
+		}
+	}
 }
 
 CRYPTOGRAM* initCryptogram()
 {
 	CRYPTOGRAM* data;
-	data->srcLetter = (char*) malloc(sizeof(char));
-	*(data->srcLetter) = 0;
+	data->letter = (LETTER*)calloc(ALPHABET_SIZE, sizeof(LETTER));
+	data->text = (char*) malloc(sizeof(char));
+	*(data->text) = NULL;
 
 	FILE *f = fopen(DATA_PATH, "r");
 	if ((f != NULL) && (fscanf(f, "%s") != EOF))
 	{
+		initLetters(data);
 		fclose(f);
 		f = fopen(DATA_PATH, "r");
-		char* temp = (char*) malloc(SIZE_OF_STRING_TO_COPY, sizeof(char));
+		char* temp = (char*) calloc(SIZE_OF_STRING_TO_COPY, sizeof(char));
 		while (fgets(temp, sizeof(temp), f) != NULL)
 		{
 			handleDataFromNewString(data, temp);
 		}
+		free(temp);
 	}
 	fclose(f);
 	return data;
-
-	//прочитать текст в curText
-	//в массиве word получить слова
-	//наполнить srcLetter буквами или нулём
-	//выделить столько же памяти для curLetter и проинициализировать
 }
 
 void printMainMenu()
@@ -78,7 +107,7 @@ void printMainMenu()
 	printf("3. Вывести слова, сгруппированные по количеству нерасшифрованных букв\n");
 	printf("4. Отобразить криптограмму\n");
 	printf("5. Заменить буквы\n");
-	printf("6. Отменить замену\n");
+	printf("6. Отменить одну из сделанных замен\n");
 	printf("7. Произвести автоматическую замену\n");
 	printf("Введите код нужной команды: ");
 }
@@ -88,12 +117,12 @@ void suggestReplacementsBasingOnFrequencyAnalysis(CRYPTOGRAM* data)
 	//TODO
 }
 
-void printWordsInOrderByLength(char** word)
+void printWordsInOrderByLength(char* text)
 {
 	//TODO
 }
 
-void printWordsInOrderByUndeciphered(char** word)
+void printWordsInOrderByUndeciphered(char* text)
 {
 	//TODO
 }
@@ -130,9 +159,9 @@ void handleMainCycle(CRYPTOGRAM* data)
 		switch (operationCode)
 		{
 		case ANALYZE: suggestReplacementsBasingOnFrequencyAnalysis(data); break;
-		case PRINT_WORDS_BY_LENGTH: printWordsInOrderByLength(data->word); break;
-		case PRINT_WORDS_BY_UNDECIPHERED: printWordsInOrderByUndeciphered(data->word); break;
-		case PRINT_BUF: printText(data->curText); break;
+		case PRINT_WORDS_BY_LENGTH: printWordsInOrderByLength(data->text); break;
+		case PRINT_WORDS_BY_UNDECIPHERED: printWordsInOrderByUndeciphered(data->text); break;
+		case PRINT_BUF: printText(data->text); break;
 		case REPLACE_LETTERS: handleReplacementMenu(data); break;
 		case REVERT: handleRevertMenu(data); break;
 		case AUTOREPLACEMENT: replaceLettersAutomatically(data); break;
@@ -145,7 +174,7 @@ void handleMainCycle(CRYPTOGRAM* data)
 int main(void)
 {
 	CRYPTOGRAM* data = initCryptogram();
-	if (data->srcLetter == 0) //в полученном тексте нет букв
+	if (data->text == NULL) //в полученном тексте нет букв
 	{
 		printf("Полученные данные не подходят для расшифровки: отсутствуют буквы.");
 		_getch();
