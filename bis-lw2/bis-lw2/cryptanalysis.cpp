@@ -16,13 +16,14 @@
 
 enum OperationCode 
 {
-	NULL_OPERATION, //операция для инициализации
-	ANALYZE,        //анализ частоты букв во входном файле и вывод предполагаемых замен в соответстви с частотами распределения букв русского алфавита
-	PRINT_WORDS,    //вывод на экран всех слов, сгруппированных по количеству нерасшифрованных на данный момент букв
-	PRINT_BUF,      //отображение криптограммы с указанием расшифрованного на данный момент текста
-	REPLACE_LETTERS, //возможность замены букв в криптограмме
-	REVERT,         //хранение и откат истории замены букв в криптограмме
-	AUTOREPLACEMENT,     //автоматическая замена букв
+	NULL_OPERATION,              //операция для инициализации
+	ANALYZE,                     //анализ частоты букв во входном файле и вывод предполагаемых замен в соответстви с частотами распределения букв русского алфавита
+	PRINT_WORDS_BY_LENGTH,       //вывод на экран всех слов, сгруппированных по количеству букв
+	PRINT_WORDS_BY_UNDECIPHERED, //вывод на экран всех слов, сгруппированных по количеству нерасшифрованных на данный момент букв
+	PRINT_BUF,                   //отображение криптограммы с указанием расшифрованного на данный момент текста
+	REPLACE_LETTERS,             //возможность замены букв в криптограмме
+	REVERT,                      //хранение и откат истории замены букв в криптограмме
+	AUTOREPLACEMENT,             //автоматическая замена букв
 	EXIT 
 };
 
@@ -36,7 +37,12 @@ void suggestReplacementsBasingOnFrequencyAnalysis(char* buf)
 	//TODO
 }
 
-void printWordsSortedByUndecipheredLetters(char* buf)
+void printWordsOrderByLength(char* buf)
+{
+	//TODO
+}
+
+void printWordsOrderByUndeciphered(char* buf)
 {
 	//TODO
 }
@@ -71,7 +77,8 @@ void handleMainCycle(char* buf)
 		switch (operationCode)
 		{
 		case ANALYZE: suggestReplacementsBasingOnFrequencyAnalysis(buf); break;
-		case PRINT_WORDS: printWordsSortedByUndecipheredLetters(buf); break;
+		case PRINT_WORDS_BY_LENGTH: printWordsOrderByLength(buf); break;
+		case PRINT_WORDS_BY_UNDECIPHERED: printWordsOrderByUndeciphered(buf); break;
 		case PRINT_BUF: printBuf(buf);  break;
 		case REPLACE_LETTERS: handleReplacementMenu(buf); break; //скорее всего замена нужна не одна за раз => отдельная менюшка
 		case REVERT: printHistoryAndRevertBuf(buf); break;
