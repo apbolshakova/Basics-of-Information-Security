@@ -6,7 +6,7 @@
 јвтозамена на основе каких предположений замен
 */
 
-#define _CRT_SECURE_NO_WARNING
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
@@ -14,13 +14,15 @@
 #define SIZE_OF_STRING_TO_COPY 1000
 #define ALPHABET_SIZE 32
 #define NO_REPLACEMENT 0
+#define EMPTY_TEXT 0
 #define DATA_PATH "input.txt"
 #define LETTERS_IN_ORDER_BY_FREQUENCY_DESC "оеаинтсрвлкмдпу€ыьгзбчйчжшюцщэфъ"
+#define ALPHABET "јЅ¬√ƒ≈∆«»… ЋћЌќѕ–—“”‘’÷„ЎўЏџ№Ёёя"
 
 #define UNKNOWN_OPERATION_MESSAGE "Ќеизвестный код команды, попробуйте другой: "
 #define INVALID_DATA_MESSAGE "ѕолученные данные не подход€т дл€ расшифровки: отсутствуют буквы."
 
-enum OperationCode 
+typedef enum 
 {
 	NULL_OPERATION,              //операци€ дл€ инициализации
 	ANALYZE,                     //анализ частоты букв во входном файле и вывод предполагаемых замен в соответстви с частотами распределени€ букв русского алфавита
@@ -31,17 +33,22 @@ enum OperationCode
 	REVERT,                      //хранение и откат истории замены букв в криптограмме
 	AUTOREPLACEMENT,             //автоматическа€ замена букв
 	EXIT 
-};
+} OPERATION_CODE;
 
-typedef struct Letter
+typedef enum 
+{ 
+	FALSE, 
+	TRUE 
+} BOOL;
+
+typedef struct
 {
-	char symbol;
 	int encounteredInSrcText; //сколько раз встретилс€ в тексте - дл€ высчитывани€ частоты
 	float frequencyInSrcText; //поссчитать при инициализации - в первом проходе
 	char replacedTo;
 } LETTER;
 
-typedef struct Cryptogram
+typedef struct
 {
 	char* text; //текст с текущими заменами дл€ вывода
 	LETTER* letter;
@@ -51,36 +58,42 @@ void initLetters(CRYPTOGRAM* data)
 {
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
-		(data->letter + i)->symbol = 'ј' + i;
 		(data->letter + i)->encounteredInSrcText = 0;
 		(data->letter + i)->frequencyInSrcText = 0;
 		(data->letter + i)->replacedTo = NO_REPLACEMENT;
 	}
 }
 
+BOOL isLetter(char item)
+{
+	if (item <= 'ј' && item <= 'я') return TRUE;
+	else return FALSE;
+}
+
 void handleDataFromNewString(CRYPTOGRAM* data, char* str)
 {
-	int sizeOfOldText = sizeof(data->text); //можно ли по-другому
+	int sizeOfOldText = sizeof(data->text); 
 	data->text = (char*) realloc(data->text, sizeOfOldText + SIZE_OF_STRING_TO_COPY * sizeof(char));
 
 	char* item = data->text + sizeOfOldText - 1; //адрес, начина€ с которого дописывать новые символы
-	int numOfUniqueLetters = 0;
 	while (*str)
 	{
 		*item = *str;
 		if (isLetter(*item))
 		{
-			//если текущий символ - буква, то нужной букве из Letters увеличить счЄтчик вхождений
+			(data->letter + (*item - 'A'))->encounteredInSrcText++;
 		}
+		item++;
+		str++;
 	}
 }
 
 CRYPTOGRAM* initCryptogram()
 {
-	CRYPTOGRAM* data;
-	data->letter = (LETTER*)calloc(ALPHABET_SIZE, sizeof(LETTER));
-	data->text = (char*) malloc(sizeof(char));
-	*(data->text) = NULL;
+	CRYPTOGRAM* data = malloc(sizeof(char) + ALPHABET_SIZE * sizeof(LETTER));
+	//data->letter = (LETTER*)calloc(ALPHABET_SIZE, sizeof(LETTER));
+	//data->text = (char*) malloc(sizeof(char));
+	*(data->text) = EMPTY_TEXT;
 
 	FILE *f = fopen(DATA_PATH, "r");
 	if ((f != NULL) && (fscanf(f, "%s") != EOF))
@@ -150,7 +163,7 @@ void replaceLettersAutomatically(CRYPTOGRAM* data)
 
 void handleMainCycle(CRYPTOGRAM* data)
 {
-	enum OperationCode operationCode = NULL_OPERATION;
+	OPERATION_CODE operationCode = NULL_OPERATION;
 	do 
 	{
 		system("cls");
@@ -174,7 +187,7 @@ void handleMainCycle(CRYPTOGRAM* data)
 int main(void)
 {
 	CRYPTOGRAM* data = initCryptogram();
-	if (data->text == NULL) //в полученном тексте нет букв
+	if (data->text == EMPTY_TEXT) //в полученном тексте нет букв
 	{
 		printf("ѕолученные данные не подход€т дл€ расшифровки: отсутствуют буквы.");
 		_getch();
