@@ -27,15 +27,14 @@ enum OperationCode
 
 struct Сryptogram
 {
-	//оригинальный текст
-	//массив с элементами-словами
-	//массив исходных букв C, D, A, F
-	//массив замен '','', b, '' -> A поменяли на b. Тогда откат - удаление элемента из этого массива
-	//возможно реализация истории через массив с элементами в порядке, каком менялись буквы
+	char* curText; //текст с текущими заменами для вывода
+	char** word; //массив элементов-слов для вывода
+	char* srcLetter; //массив исходных букв C, D, A, F для откатов
+	char* curLetter; //массив замен '','', b, '' -> A поменяли на b. Тогда откат - удаление элемента из этого массива
 };
 typedef struct Cryptogram CRYPTOGRAM;
 
-char* getBufFromInput()
+char* getCryptogramFromInput()
 {
 	//TODO
 }
@@ -81,6 +80,7 @@ void handleReplacementMenu(char* buf)
 void printHistoryAndRevertBuf(char* buf)
 {
 	//TODO
+	//вывести список проведённых замен и предложить возможность отмены
 }
 
 void replaceLettersAutomatically(char* buf)
@@ -113,7 +113,7 @@ void handleMainCycle(char* buf)
 
 int main(void)
 {
-	char* buf = getBufFromInput(); //получить строку из входного файла в buf
+	char* buf = getCryptogramFromInput(); //получить строку из входного файла в buf
 	handleMainCycle(buf); //запуск основного цикла программы
 	return 0;
 }
