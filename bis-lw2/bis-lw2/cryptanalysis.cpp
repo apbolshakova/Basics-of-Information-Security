@@ -9,6 +9,7 @@
 #define _CRT_SECURE_NO_WARNING
 #include <stdio.h>
 #include <stdlib.h>
+#include <conio.h>
 
 #define UNKNOWN_OPERATION_MESSAGE "Неизвестный код команды, попробуйте другой: "
 
@@ -25,18 +26,17 @@ enum OperationCode
 	EXIT 
 };
 
-struct Сryptogram
+typedef struct Cryptogram
 {
 	char* curText; //текст с текущими заменами для вывода
 	char** word; //массив элементов-слов для вывода
 	char* srcLetter; //массив исходных букв C, D, A, F для откатов
 	char* curLetter; //массив замен '','', b, '' -> A поменяли на b. Тогда откат - удаление элемента из этого массива
-};
-typedef struct Cryptogram CRYPTOGRAM;
+} CRYPTOGRAM;
 
-char* getCryptogramFromInput()
+CRYPTOGRAM* initCryptogram()
 {
-	//TODO
+	return 0;
 }
 
 void printMainMenu()
@@ -88,7 +88,7 @@ void replaceLettersAutomatically(char* buf)
 	//TODO
 }
 
-void handleMainCycle(char* buf)
+void handleMainCycle(CRYPTOGRAM* data)
 {
 	OperationCode operationCode = NULL_OPERATION;
 	do 
@@ -113,7 +113,13 @@ void handleMainCycle(char* buf)
 
 int main(void)
 {
-	char* buf = getCryptogramFromInput(); //получить строку из входного файла в buf
-	handleMainCycle(buf); //запуск основного цикла программы
+	CRYPTOGRAM* data = initCryptogram();
+	if (data->srcLetter == 0) //в полученном тексте нет букв
+	{
+		printf("Полученные данные не подходят для расшифровки: отсутствуют буквы.");
+		_getch();
+		return 0;
+	}
+	handleMainCycle(data);
 	return 0;
 }
