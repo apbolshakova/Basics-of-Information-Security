@@ -2,7 +2,7 @@
 Нужно ли очищать строку после каждого этапа
 На основе чего предполагаются замены
 "расшифрованный на данный момент текст" как выделить
-Сколько истории хранить
+Сколько истории хранить и на что должно быть похоже
 Автозамена на основе каких предположений замен
 */
 
@@ -10,9 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define MENU_TEXT "Menu text" //TODO: написать меню
-#define UNKNOWN_OPERATION_MESSAGE "Unknown operation code. Enter another one: " //TODO: написать меню
-
+#define UNKNOWN_OPERATION_MESSAGE "Неизвестный код команды, попробуйте другой: "
 
 enum OperationCode 
 {
@@ -27,9 +25,32 @@ enum OperationCode
 	EXIT 
 };
 
+struct Сryptogram
+{
+	//оригинальный текст
+	//массив с элементами-словами
+	//массив исходных букв C, D, A, F
+	//массив замен '','', b, '' -> A поменяли на b. Тогда откат - удаление элемента из этого массива
+	//возможно реализация истории через массив с элементами в порядке, каком менялись буквы
+};
+typedef struct Cryptogram CRYPTOGRAM;
+
 char* getBufFromInput()
 {
 	//TODO
+}
+
+void printMainMenu()
+{
+	printf("Вас приветствует программа, реализующая функции инструмента криптоаналитика. Возможные действия:\n");
+	printf("1. Анализировать частоты букв и предложить замены\n");
+	printf("2. Вывести слова, сгруппированные по количеству букв\n");
+	printf("3. Вывести слова, сгруппированные по количеству нерасшифрованных букв\n");
+	printf("4. Отобразить криптограмму\n");
+	printf("5. Заменить буквы\n");
+	printf("6. Отменить замену\n");
+	printf("7. Произвести автоматическую замену\n");
+	printf("Введите код нужной команды: ");
 }
 
 void suggestReplacementsBasingOnFrequencyAnalysis(char* buf)
@@ -72,7 +93,7 @@ void handleMainCycle(char* buf)
 	OperationCode operationCode = NULL_OPERATION;
 	do 
 	{
-		printf(MENU_TEXT);
+		printMainMenu();
 		scanf("%i", &operationCode);
 		switch (operationCode)
 		{
