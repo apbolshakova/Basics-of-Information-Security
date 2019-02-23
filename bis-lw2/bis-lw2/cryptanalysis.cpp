@@ -14,7 +14,7 @@
 
 #define SIZE_OF_STRING_TO_COPY 1000
 #define ALPHABET_SIZE 32
-#define NO_REPLACEMENT 0
+#define NO_REPLACEMENTS 0
 #define EMPTY_TEXT 0
 #define DATA_PATH "input.txt"
 #define LETTERS_IN_ORDER_BY_FREQUENCY_DESC "оеаинтсрвлкмдпуяыьгзбчйчжшюцщэфъ"
@@ -61,7 +61,7 @@ void initLetters(LETTER* letter)
 	{
 		(letter + i)->encounteredInSrcText = 0;
 		(letter + i)->frequencyInSrcText = 0;
-		(letter + i)->replacedTo = NO_REPLACEMENT;
+		(letter + i)->replacedTo = NO_REPLACEMENTS;
 	}
 }
 
@@ -71,33 +71,45 @@ BOOL isLetter(char item)
 	else return FALSE;
 }
 
+void swap(char* a, char* b)
+{
+	char* temp = a;
+	a = b;
+	b = temp;
+}
+
 void handleDataFromNewString(CRYPTOGRAM* data, char* str)
 {
-	int sizeOfOldText = sizeof(data->text); 
-	data->text = (char*) realloc(data->text, sizeOfOldText + SIZE_OF_STRING_TO_COPY * sizeof(char));
-
-	char* item = data->text + sizeOfOldText - 1; //адрес, начиная с которого дописывать новые символы
-	while (*str)
+	int sizeOfOldText = 0; 
+	char* sav = data->text; //сохранить указатель
+	while (*(data->text)) //получить место, где строка кончается
 	{
-		*item = *str;
-		if (isLetter(*item))
-		{
-			(data->letter + (*item - 'A'))->encounteredInSrcText++;
-		}
-		item++;
+		sizeOfOldText++;
+		data->text++;
+	}
+
+	data->text = sav;
+	data->text = (char*) realloc(data->text, (sizeOfOldText + SIZE_OF_STRING_TO_COPY) * sizeof(char)); //увеличить память
+	
+	sav = data->text;
+	data->text += sizeOfOldText;
+	while (*str) //копировать символы
+	{
+		*(data->text) = *str;
+		if (isLetter(*(data->text))) (data->letter + (*(data->text) - 'A'))->encounteredInSrcText++;
+		(data->text)++;
 		str++;
 	}
+	*(data->text) = '\0';
+	data->text = sav;
 }
 
 void initTextAndCalculateEncounters(CRYPTOGRAM* data, FILE* f)
 {
 	fclose(f);
 	f = fopen(DATA_PATH, "r");
-	char* temp = (char*)calloc(SIZE_OF_STRING_TO_COPY, sizeof(char));
-	while (fgets(temp, sizeof(temp), f) != NULL)
-	{
-		handleDataFromNewString(data, temp);
-	}
+	char* temp = (char*) calloc(SIZE_OF_STRING_TO_COPY, sizeof(char));
+	while (fgets(temp, SIZE_OF_STRING_TO_COPY * sizeof(char), f) != NULL) handleDataFromNewString(data, temp);
 	free(temp);
 }
 
@@ -129,7 +141,7 @@ void printMainMenu()
 	printf("6. Отменить одну из сделанных замен\n");
 	printf("7. Произвести автоматическую замену\n");
 	printf("8. Выход\n");
-	printf("Введите код нужной команды (любой код, кроме перечисленных будет проигнорирован): ");
+	printf("Введите код нужной команды (любой код, кроме перечисленных, будет проигнорирован): ");
 }
 
 void suggestReplacementsBasingOnFrequencyAnalysis(CRYPTOGRAM* data)
@@ -149,7 +161,10 @@ void printWordsInOrderByUndeciphered(char* text)
 
 void printText(char* text)
 {
-	//TODO
+	//очистить экран
+    //напечатать сообщение о выбранной операции
+	//вывести криптограмму
+	//ожидание ввода для возвращения в меню
 }
 
 void handleReplacementMenu(CRYPTOGRAM* data)
@@ -168,12 +183,24 @@ void replaceLettersAutomatically(CRYPTOGRAM* data)
 	//TODO
 }
 
+void printCryptoInfo(CRYPTOGRAM* data)
+{
+	char* symbolPtr = data->text; //напечатать криптограмму
+	while (*symbolPtr)
+	{
+		printf("%c", *symbolPtr);
+		symbolPtr++;
+	}
+	//напечатать пары буква - количество встреч, значение replacedTo
+}
+
 void handleMainCycle(CRYPTOGRAM* data)
 {
 	OPERATION_CODE operationCode = NULL_OPERATION;
 	do 
 	{
 		system("cls");
+		printCryptoInfo(data); //отладка
 		printMainMenu();
 		scanf("%i", &operationCode);
 		switch (operationCode)
@@ -201,10 +228,7 @@ int main(void)
 		printf(INVALID_DATA_MESSAGE);
 		_getch();
 	}
-	else
-	{
-		handleMainCycle(data);
-	}
+	else handleMainCycle(data);
 	free(data);
 	return 0;
 }
