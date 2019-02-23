@@ -15,11 +15,9 @@
 #define SIZE_OF_STRING_TO_COPY 1000
 #define ALPHABET_SIZE 32
 #define NO_REPLACEMENTS 0
-#define EMPTY_TEXT '\0'
 #define RETURN_TO_MENU_BTN_CODE 32
 #define DATA_PATH "input.txt"
 #define LETTERS_IN_ORDER_BY_FREQUENCY_DESC "оеаинтсрвлкмдпу€ыьгзбчйчжшюцщэфъ"
-//#define ALPHABET "јЅ¬√ƒ≈∆«»… ЋћЌќѕ–—“”‘’÷„ЎўЏџ№Ёёя" TODO: нужен ли
 
 #define INVALID_DATA_MESSAGE "ѕолученные данные не подход€т дл€ расшифровки: отсутствуют буквы.\n"
 #define SUCESS_INIT_MESSAGE "»сходный текст криптограммы успешно загружен.\n"
@@ -28,7 +26,7 @@
 typedef enum 
 {
 	NULL_OPERATION,              //операци€ дл€ инициализации
-	ANALYZE,                     //анализ частоты букв во входном файле и вывод предполагаемых замен в соответстви с частотами распределени€ букв русского алфавита
+	ANALYZE = '1',               //анализ частоты букв во входном файле и вывод предполагаемых замен в соответстви с частотами распределени€ букв русского алфавита
 	PRINT_WORDS_BY_LENGTH,       //вывод на экран всех слов, сгруппированных по количеству букв
 	PRINT_WORDS_BY_UNDECIPHERED, //вывод на экран всех слов, сгруппированных по количеству нерасшифрованных на данный момент букв
 	PRINT_TEXT,                  //отображение криптограммы с указанием расшифрованного на данный момент текста
@@ -54,6 +52,7 @@ typedef struct Letter
 typedef struct Cryptogram
 {
 	char* text; //текст с текущими заменами дл€ вывода
+	int numOfLetters;
 	LETTER* letter;
 } CRYPTOGRAM;
 
@@ -93,6 +92,7 @@ void handleDataFromNewString(CRYPTOGRAM* data, char* str) //TODO: рефакторинг
 		*(data->text) = *str;
 		if (isLetter(*(data->text)))
 		{
+			data->numOfLetters++;
 			(data->letter + (*(data->text) + 64))->encounteredInSrcText++;
 		}
 		(data->text)++;
@@ -111,12 +111,21 @@ void initTextAndCalculateEncounters(CRYPTOGRAM* data, FILE* f)
 	free(temp);
 }
 
+void calculateFrequencies(CRYPTOGRAM* data)
+{
+	for (int i = 0; i < ALPHABET_SIZE; i++)
+	{
+		(data->letter + i)->frequencyInSrcText = (float) (data->letter + i)->encounteredInSrcText / data->numOfLetters;
+	}
+}
+
 CRYPTOGRAM* initCryptogram()
 {
-	CRYPTOGRAM* data = malloc(sizeof(char*) + sizeof(LETTER*));
+	CRYPTOGRAM* data = malloc(sizeof(char*) + sizeof(LETTER*) + sizeof(int));
 	data->text = malloc(sizeof(char));
 	data->letter = (LETTER*)calloc(ALPHABET_SIZE, sizeof(LETTER));
-	*(data->text) = EMPTY_TEXT;
+	*(data->text) = '\0';
+	data->numOfLetters = 0;
 
 	FILE *f = fopen(DATA_PATH, "r");
 	if ((f != NULL) && (fgetc(f) != EOF) && !(feof(f)))
@@ -125,6 +134,8 @@ CRYPTOGRAM* initCryptogram()
 		initTextAndCalculateEncounters(data, f);
 	}
 	fclose(f);
+
+	calculateFrequencies(data);
 	return data;
 }
 
@@ -193,7 +204,7 @@ void handleMainCycle(CRYPTOGRAM* data)
 	{
 		system("cls");
 		printMainMenu();
-		scanf("%i", &operationCode);
+		scanf("%c", &operationCode);
 		switch (operationCode)
 		{
 		case ANALYZE: suggestReplacementsBasingOnFrequencyAnalysis(data); break;
@@ -213,7 +224,7 @@ int main(void)
 	setlocale(LC_ALL, "rus");
 
 	CRYPTOGRAM* data = initCryptogram();
-	if (*(data->text) == EMPTY_TEXT) //в полученном тексте пусто
+	if (data->numOfLetters == 0) //в полученном тексте пусто
 	{
 		printf(INVALID_DATA_MESSAGE);
 		_getch();
