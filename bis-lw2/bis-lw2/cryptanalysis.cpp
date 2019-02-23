@@ -15,13 +15,15 @@
 #define SIZE_OF_STRING_TO_COPY 1000
 #define ALPHABET_SIZE 32
 #define NO_REPLACEMENTS 0
-#define EMPTY_TEXT 0
+#define EMPTY_TEXT '\0'
+#define RETURN_TO_MENU_BTN_CODE 32
 #define DATA_PATH "input.txt"
 #define LETTERS_IN_ORDER_BY_FREQUENCY_DESC "оеаинтсрвлкмдпу€ыьгзбчйчжшюцщэфъ"
-#define ALPHABET "јЅ¬√ƒ≈∆«»… ЋћЌќѕ–—“”‘’÷„ЎўЏџ№Ёёя"
+//#define ALPHABET "јЅ¬√ƒ≈∆«»… ЋћЌќѕ–—“”‘’÷„ЎўЏџ№Ёёя" TODO: нужен ли
 
 #define INVALID_DATA_MESSAGE "ѕолученные данные не подход€т дл€ расшифровки: отсутствуют буквы.\n"
 #define SUCESS_INIT_MESSAGE "»сходный текст криптограммы успешно загружен.\n"
+#define RETURN_TO_MENU_MESSAGE "Ќажмите пробел, чтобы вернутьс€ в главное меню.\n"
 
 typedef enum 
 {
@@ -29,7 +31,7 @@ typedef enum
 	ANALYZE,                     //анализ частоты букв во входном файле и вывод предполагаемых замен в соответстви с частотами распределени€ букв русского алфавита
 	PRINT_WORDS_BY_LENGTH,       //вывод на экран всех слов, сгруппированных по количеству букв
 	PRINT_WORDS_BY_UNDECIPHERED, //вывод на экран всех слов, сгруппированных по количеству нерасшифрованных на данный момент букв
-	PRINT_BUF,                   //отображение криптограммы с указанием расшифрованного на данный момент текста
+	PRINT_TEXT,                  //отображение криптограммы с указанием расшифрованного на данный момент текста
 	REPLACE_LETTERS,             //возможность замены букв в криптограмме
 	REVERT,                      //хранение и откат истории замены букв в криптограмме
 	AUTOREPLACEMENT,             //автоматическа€ замена букв
@@ -44,7 +46,7 @@ typedef enum Bool
 
 typedef struct Letter
 {
-	int encounteredInSrcText; //сколько раз встретилс€ в тексте - дл€ высчитывани€ частоты
+	int encounteredInSrcText; //сколько раз встретилс€ в тексте
 	float frequencyInSrcText; //поссчитать при инициализации - в первом проходе
 	char replacedTo;
 } LETTER;
@@ -117,7 +119,7 @@ CRYPTOGRAM* initCryptogram()
 	*(data->text) = EMPTY_TEXT;
 
 	FILE *f = fopen(DATA_PATH, "r");
-	if ((f != NULL) && (fscanf(f, "%s") != EOF))
+	if ((f != NULL) && (fgetc(f) != EOF) && !(feof(f)))
 	{
 		initLetters(data->letter);
 		initTextAndCalculateEncounters(data, f);
@@ -157,10 +159,15 @@ void printWordsInOrderByUndeciphered(char* text)
 
 void printText(char* text)
 {
-	//очистить экран
-    //напечатать сообщение о выбранной операции
-	//вывести криптограмму
-	//ожидание ввода дл€ возвращени€ в меню
+	system("cls");
+	printf("“екст криптограммы с выполненными заменами:\n\n");
+    
+	char* ptr = text;
+	while (*(ptr)) printf("%c", *(ptr++));
+	printf("\n\n");
+
+	printf(RETURN_TO_MENU_MESSAGE);
+	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
 void handleReplacementMenu(CRYPTOGRAM* data)
@@ -185,7 +192,6 @@ void handleMainCycle(CRYPTOGRAM* data)
 	do 
 	{
 		system("cls");
-		printCryptoInfo(data); //отладка
 		printMainMenu();
 		scanf("%i", &operationCode);
 		switch (operationCode)
@@ -193,11 +199,10 @@ void handleMainCycle(CRYPTOGRAM* data)
 		case ANALYZE: suggestReplacementsBasingOnFrequencyAnalysis(data); break;
 		case PRINT_WORDS_BY_LENGTH: printWordsInOrderByLength(data->text); break;
 		case PRINT_WORDS_BY_UNDECIPHERED: printWordsInOrderByUndeciphered(data->text); break;
-		case PRINT_BUF: printText(data->text); break;
+		case PRINT_TEXT: printText(data->text); break;
 		case REPLACE_LETTERS: handleReplacementMenu(data); break;
 		case REVERT: handleRevertMenu(data); break;
 		case AUTOREPLACEMENT: replaceLettersAutomatically(data); break;
-		case EXIT: break;
 		default: break;
 		}
 	} while (operationCode != EXIT);
@@ -208,7 +213,7 @@ int main(void)
 	setlocale(LC_ALL, "rus");
 
 	CRYPTOGRAM* data = initCryptogram();
-	if (data->text == EMPTY_TEXT) //в полученном тексте нет букв
+	if (*(data->text) == EMPTY_TEXT) //в полученном тексте пусто
 	{
 		printf(INVALID_DATA_MESSAGE);
 		_getch();
