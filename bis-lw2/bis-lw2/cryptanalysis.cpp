@@ -1,11 +1,3 @@
-/*ВОПРОСЫ:
-Нужно ли очищать строку после каждого этапа
-На основе чего предполагаются замены
-"расшифрованный на данный момент текст" как выделить
-Сколько истории хранить и на что должно быть похоже
-Автозамена на основе каких предположений замен
-*/
-
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +7,7 @@
 #define SIZE_OF_STRING_TO_COPY 1000
 #define ALPHABET_SIZE 32
 #define NO_REPLACEMENTS 0
+#define NO_LETTERS_IN_TEXT 0
 #define RETURN_TO_MENU_BTN_CODE 32
 #define DATA_PATH "input.txt"
 #define LETTERS_IN_ORDER_BY_FREQUENCY_DESC "оеаинтсрвлкмдпуяыьгзбчйчжшюцщэфъ"
@@ -44,14 +37,14 @@ typedef enum Bool
 
 typedef struct Letter
 {
-	int encounteredInSrcText; //сколько раз встретился в тексте
-	float frequencyInSrcText; //поссчитать при инициализации - в первом проходе
-	char replacedTo;
+	int encounteredInSrcText;
+	float frequencyInSrcText;
+	char replacedTo; //TODO: сделать это строкой из маленьких символов в порядке от самой старой до самой новой замены
 } LETTER;
 
 typedef struct Cryptogram
 {
-	char* text; //текст с текущими заменами для вывода
+	char* text;
 	int numOfLetters;
 	LETTER* letter;
 } CRYPTOGRAM;
@@ -156,16 +149,21 @@ void printMainMenu()
 void suggestReplacementsBasingOnFrequencyAnalysis(CRYPTOGRAM* data)
 {
 	//TODO
+	//Найти наибольшую частоту, для которой не была выбрана замена и предложить заменить букву этой частоты на 1-ую неиспользованную в заменах букву из LETTERS_IN_ORDER_BY_FREQUENCY_DESC
 }
 
 void printWordsInOrderByLength(char* text)
 {
 	//TODO
+	//выделить массив слов (слово содержит символы, свою длину, сколько разных букв капсом), получить наибольшую длину
+	//вывести от наибольшей длины к наименьшей
 }
 
 void printWordsInOrderByUndeciphered(char* text)
 {
 	//TODO
+	//выделить массив слов (слово содержит символы, свою длину, сколько разных букв капсом), получить наибольшее количество букв капсом
+	//вывести от наибольшей длины к наименьшей
 }
 
 void printText(char* text)
@@ -184,17 +182,28 @@ void printText(char* text)
 void handleReplacementMenu(CRYPTOGRAM* data)
 {
 	//TODO
+	//Вывести список незаменённых букв
+	//попросить ввести букву для замены
+	//на какую букву
+	//успешная замена - ещё одна или главное меню
 }
 
 void handleRevertMenu(CRYPTOGRAM* data)
 {
 	//TODO
-	//вывести список проведённых замен и предложить возможность отмены
+	//Вывести список пар исходная буква - её последняя замена
+	//выбрать исходную букву
+	//показать для неё историю изменений из replacedTo
+	//совершить замену или выйти в меню замен
+	//ещё раз всё это или главное меню
 }
 
 void replaceLettersAutomatically(CRYPTOGRAM* data)
 {
 	//TODO
+	//сортировать буквы letters по частоте (по убыванию) в тексте
+	//от 0 до 31: уникальная частота - сменить на i-ую из сортированного списка для русского алфавита
+	//            не уникальная частота - прекратить автозамену
 }
 
 void handleMainCycle(CRYPTOGRAM* data)
@@ -224,7 +233,7 @@ int main(void)
 	setlocale(LC_ALL, "rus");
 
 	CRYPTOGRAM* data = initCryptogram();
-	if (data->numOfLetters == 0) //в полученном тексте пусто
+	if (data->numOfLetters == NO_LETTERS_IN_TEXT)
 	{
 		printf(INVALID_DATA_MESSAGE);
 		_getch();
@@ -233,3 +242,11 @@ int main(void)
 	free(data);
 	return 0;
 }
+
+/*ВОПРОСЫ:
+Нужно ли очищать строку после каждого этапа
+На основе чего предполагаются замены
+"расшифрованный на данный момент текст" как выделить
+Сколько истории хранить и на что должно быть похоже
+Автозамена на основе каких предположений замен
+*/
