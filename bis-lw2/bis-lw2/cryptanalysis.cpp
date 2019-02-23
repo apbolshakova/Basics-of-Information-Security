@@ -67,21 +67,14 @@ void initLetters(LETTER* letter)
 
 BOOL isLetter(char item)
 {
-	if (item <= 'А' && item <= 'Я') return TRUE;
+	if ('А' <= item && item <= 'Я') return TRUE;
 	else return FALSE;
 }
 
-void swap(char* a, char* b)
-{
-	char* temp = a;
-	a = b;
-	b = temp;
-}
-
-void handleDataFromNewString(CRYPTOGRAM* data, char* str)
+void handleDataFromNewString(CRYPTOGRAM* data, char* str) //TODO: рефакторинг
 {
 	int sizeOfOldText = 0; 
-	char* sav = data->text; //сохранить указатель
+	char* sav = data->text;
 	while (*(data->text)) //получить место, где строка кончается
 	{
 		sizeOfOldText++;
@@ -96,7 +89,10 @@ void handleDataFromNewString(CRYPTOGRAM* data, char* str)
 	while (*str) //копировать символы
 	{
 		*(data->text) = *str;
-		if (isLetter(*(data->text))) (data->letter + (*(data->text) - 'A'))->encounteredInSrcText++;
+		if (isLetter(*(data->text)))
+		{
+			(data->letter + (*(data->text) + 64))->encounteredInSrcText++;
+		}
 		(data->text)++;
 		str++;
 	}
@@ -181,17 +177,6 @@ void handleRevertMenu(CRYPTOGRAM* data)
 void replaceLettersAutomatically(CRYPTOGRAM* data)
 {
 	//TODO
-}
-
-void printCryptoInfo(CRYPTOGRAM* data)
-{
-	char* symbolPtr = data->text; //напечатать криптограмму
-	while (*symbolPtr)
-	{
-		printf("%c", *symbolPtr);
-		symbolPtr++;
-	}
-	//напечатать пары буква - количество встреч, значение replacedTo
 }
 
 void handleMainCycle(CRYPTOGRAM* data)
