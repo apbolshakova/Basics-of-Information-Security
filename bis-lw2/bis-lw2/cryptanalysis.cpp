@@ -9,6 +9,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
+#include <locale.h>
 #include <conio.h>
 
 #define SIZE_OF_STRING_TO_COPY 1000
@@ -19,8 +20,8 @@
 #define LETTERS_IN_ORDER_BY_FREQUENCY_DESC "оеаинтсрвлкмдпуяыьгзбчйчжшюцщэфъ"
 #define ALPHABET "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
 
-#define UNKNOWN_OPERATION_MESSAGE "Неизвестный код команды, попробуйте другой: "
-#define INVALID_DATA_MESSAGE "Полученные данные не подходят для расшифровки: отсутствуют буквы."
+#define INVALID_DATA_MESSAGE "Полученные данные не подходят для расшифровки: отсутствуют буквы.\n"
+#define SUCESS_INIT_MESSAGE "Исходный текст криптограммы успешно загружен.\n"
 
 typedef enum 
 {
@@ -35,32 +36,32 @@ typedef enum
 	EXIT 
 } OPERATION_CODE;
 
-typedef enum 
+typedef enum Bool
 { 
 	FALSE, 
 	TRUE 
 } BOOL;
 
-typedef struct
+typedef struct Letter
 {
 	int encounteredInSrcText; //сколько раз встретился в тексте - для высчитывания частоты
 	float frequencyInSrcText; //поссчитать при инициализации - в первом проходе
 	char replacedTo;
 } LETTER;
 
-typedef struct
+typedef struct Cryptogram
 {
 	char* text; //текст с текущими заменами для вывода
 	LETTER* letter;
 } CRYPTOGRAM;
 
-void initLetters(CRYPTOGRAM* data)
+void initLetters(LETTER* letter)
 {
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
-		(data->letter + i)->encounteredInSrcText = 0;
-		(data->letter + i)->frequencyInSrcText = 0;
-		(data->letter + i)->replacedTo = NO_REPLACEMENT;
+		(letter + i)->encounteredInSrcText = 0;
+		(letter + i)->frequencyInSrcText = 0;
+		(letter + i)->replacedTo = NO_REPLACEMENT;
 	}
 }
 
@@ -88,25 +89,30 @@ void handleDataFromNewString(CRYPTOGRAM* data, char* str)
 	}
 }
 
+void initTextAndCalculateEncounters(CRYPTOGRAM* data, FILE* f)
+{
+	fclose(f);
+	f = fopen(DATA_PATH, "r");
+	char* temp = (char*)calloc(SIZE_OF_STRING_TO_COPY, sizeof(char));
+	while (fgets(temp, sizeof(temp), f) != NULL)
+	{
+		handleDataFromNewString(data, temp);
+	}
+	free(temp);
+}
+
 CRYPTOGRAM* initCryptogram()
 {
-	CRYPTOGRAM* data = malloc(sizeof(char) + ALPHABET_SIZE * sizeof(LETTER));
-	//data->letter = (LETTER*)calloc(ALPHABET_SIZE, sizeof(LETTER));
-	//data->text = (char*) malloc(sizeof(char));
+	CRYPTOGRAM* data = malloc(sizeof(char*) + sizeof(LETTER*));
+	data->text = malloc(sizeof(char));
+	data->letter = (LETTER*)calloc(ALPHABET_SIZE, sizeof(LETTER));
 	*(data->text) = EMPTY_TEXT;
 
 	FILE *f = fopen(DATA_PATH, "r");
 	if ((f != NULL) && (fscanf(f, "%s") != EOF))
 	{
-		initLetters(data);
-		fclose(f);
-		f = fopen(DATA_PATH, "r");
-		char* temp = (char*) calloc(SIZE_OF_STRING_TO_COPY, sizeof(char));
-		while (fgets(temp, sizeof(temp), f) != NULL)
-		{
-			handleDataFromNewString(data, temp);
-		}
-		free(temp);
+		initLetters(data->letter);
+		initTextAndCalculateEncounters(data, f);
 	}
 	fclose(f);
 	return data;
@@ -122,7 +128,8 @@ void printMainMenu()
 	printf("5. Заменить буквы\n");
 	printf("6. Отменить одну из сделанных замен\n");
 	printf("7. Произвести автоматическую замену\n");
-	printf("Введите код нужной команды: ");
+	printf("8. Выход\n");
+	printf("Введите код нужной команды (любой код, кроме перечисленных будет проигнорирован): ");
 }
 
 void suggestReplacementsBasingOnFrequencyAnalysis(CRYPTOGRAM* data)
@@ -179,17 +186,19 @@ void handleMainCycle(CRYPTOGRAM* data)
 		case REVERT: handleRevertMenu(data); break;
 		case AUTOREPLACEMENT: replaceLettersAutomatically(data); break;
 		case EXIT: break;
-		default: printf(UNKNOWN_OPERATION_MESSAGE);
+		default: break;
 		}
 	} while (operationCode != EXIT);
 }
 
 int main(void)
 {
+	setlocale(LC_ALL, "rus");
+
 	CRYPTOGRAM* data = initCryptogram();
 	if (data->text == EMPTY_TEXT) //в полученном тексте нет букв
 	{
-		printf("Полученные данные не подходят для расшифровки: отсутствуют буквы.");
+		printf(INVALID_DATA_MESSAGE);
 		_getch();
 	}
 	else
