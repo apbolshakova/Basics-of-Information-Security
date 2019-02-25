@@ -39,7 +39,7 @@ typedef struct Letter
 {
 	int encounteredInSrcText;
 	float frequencyInSrcText;
-	char replacedTo; //TODO: сделать это строкой из маленьких символов в порядке от самой старой до самой новой замены
+	char replacedTo;
 } LETTER;
 
 typedef struct Cryptogram
@@ -48,6 +48,14 @@ typedef struct Cryptogram
 	int numOfLetters;
 	LETTER* letter;
 } CRYPTOGRAM;
+
+typedef struct ChangesListItem
+{
+	CHANGES_LIST_ITEM* prev;
+	CHANGES_LIST_ITEM* next;
+	char originalLetter;
+	char replacedTo;
+} CHANGES_LIST_ITEM;
 
 void initLetters(LETTER* letter)
 {
@@ -127,9 +135,13 @@ CRYPTOGRAM* initCryptogram()
 		initTextAndCalculateEncounters(data, f);
 	}
 	fclose(f);
-
-	calculateFrequencies(data);
+	if (data->numOfLetters != NO_LETTERS_IN_TEXT) calculateFrequencies(data);
 	return data;
+}
+
+CHANGES_LIST_ITEM* initChangeList()
+{
+	//TODO: реализовать инициализацию двусвязного списка
 }
 
 void printMainMenu()
@@ -238,15 +250,11 @@ int main(void)
 		printf(INVALID_DATA_MESSAGE);
 		_getch();
 	}
-	else handleMainCycle(data);
+	else
+	{
+		CHANGES_LIST_ITEM* lastChange = initChangesList();
+		handleMainCycle(data);
+	}
 	free(data);
 	return 0;
 }
-
-/*ВОПРОСЫ:
-Нужно ли очищать строку после каждого этапа
-На основе чего предполагаются замены
-"расшифрованный на данный момент текст" как выделить
-Сколько истории хранить и на что должно быть похоже
-Автозамена на основе каких предположений замен
-*/
