@@ -6,7 +6,7 @@
 
 #define SIZE_OF_STRING_TO_COPY 1000
 #define ALPHABET_SIZE 32
-#define NO_REPLACEMENTS 0
+#define NO_REPLACEMENT 0
 #define NO_LETTERS_IN_TEXT 0
 #define RETURN_TO_MENU_BTN_CODE 32
 #define DATA_PATH "input.txt"
@@ -42,13 +42,6 @@ typedef struct Letter
 	char replacedTo;
 } LETTER;
 
-typedef struct Cryptogram
-{
-	char* text;
-	int numOfLetters;
-	LETTER* letter;
-} CRYPTOGRAM;
-
 typedef struct ChangesListItem
 {
 	CHANGES_LIST_ITEM* prev;
@@ -57,14 +50,32 @@ typedef struct ChangesListItem
 	char replacedTo;
 } CHANGES_LIST_ITEM;
 
+typedef struct Cryptogram
+{
+	char* text;
+	int numOfLetters;
+	LETTER* letter;
+	CHANGES_LIST_ITEM* lastChange;
+} CRYPTOGRAM;
+
 void initLetters(LETTER* letter)
 {
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
 		(letter + i)->encounteredInSrcText = 0;
 		(letter + i)->frequencyInSrcText = 0;
-		(letter + i)->replacedTo = NO_REPLACEMENTS;
+		(letter + i)->replacedTo = NO_REPLACEMENT;
 	}
+}
+
+CHANGES_LIST_ITEM* initChangesList()
+{
+	CHANGES_LIST_ITEM* initialItem = (CHANGES_LIST_ITEM*)malloc(2 * sizeof(CHANGES_LIST_ITEM*) + 2 * sizeof(char));
+	initialItem->prev = NULL;
+	initialItem->next = NULL;
+	initialItem->originalLetter = NO_REPLACEMENT;
+	initialItem->replacedTo = NO_REPLACEMENT;
+	return initialItem;
 }
 
 BOOL isLetter(char item)
@@ -122,11 +133,12 @@ void calculateFrequencies(CRYPTOGRAM* data)
 
 CRYPTOGRAM* initCryptogram()
 {
-	CRYPTOGRAM* data = malloc(sizeof(char*) + sizeof(LETTER*) + sizeof(int));
+	CRYPTOGRAM* data = malloc(sizeof(char*) + sizeof(LETTER*) + sizeof(int) + sizeof(CHANGES_LIST_ITEM*));
 	data->text = malloc(sizeof(char));
-	data->letter = (LETTER*)calloc(ALPHABET_SIZE, sizeof(LETTER));
 	*(data->text) = '\0';
+	data->letter = (LETTER*) calloc(ALPHABET_SIZE, sizeof(LETTER));
 	data->numOfLetters = 0;
+	data->lastChange = initChangesList();
 
 	FILE *f = fopen(DATA_PATH, "r");
 	if ((f != NULL) && (fgetc(f) != EOF) && !(feof(f)))
@@ -137,11 +149,6 @@ CRYPTOGRAM* initCryptogram()
 	fclose(f);
 	if (data->numOfLetters != NO_LETTERS_IN_TEXT) calculateFrequencies(data);
 	return data;
-}
-
-CHANGES_LIST_ITEM* initChangeList()
-{
-	//TODO: реализовать инициализацию двусвязного списка
 }
 
 void printMainMenu()
@@ -250,11 +257,8 @@ int main(void)
 		printf(INVALID_DATA_MESSAGE);
 		_getch();
 	}
-	else
-	{
-		CHANGES_LIST_ITEM* lastChange = initChangesList();
-		handleMainCycle(data);
-	}
+	else handleMainCycle(data);
+	//TODO: добавить функцию, подчищающую память
 	free(data);
 	return 0;
 }
