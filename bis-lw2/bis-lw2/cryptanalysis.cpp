@@ -55,7 +55,7 @@ typedef struct Cryptogram
 	char* text;
 	int numOfLetters;
 	LETTER* letter;
-	CHANGES_LIST_ITEM* lastChange;
+	CHANGES_LIST_ITEM* curChange;
 } CRYPTOGRAM;
 
 void initLetters(LETTER* letter)
@@ -131,6 +131,11 @@ void calculateFrequencies(CRYPTOGRAM* data)
 	}
 }
 
+int cmpByFrequency()
+{
+	//TODO: реализовать
+}
+
 CRYPTOGRAM* initCryptogram()
 {
 	CRYPTOGRAM* data = malloc(sizeof(char*) + sizeof(LETTER*) + sizeof(int) + sizeof(CHANGES_LIST_ITEM*));
@@ -138,7 +143,7 @@ CRYPTOGRAM* initCryptogram()
 	*(data->text) = '\0';
 	data->letter = (LETTER*) calloc(ALPHABET_SIZE, sizeof(LETTER));
 	data->numOfLetters = 0;
-	data->lastChange = initChangesList();
+	data->curChange = initChangesList();
 
 	FILE *f = fopen(DATA_PATH, "r");
 	if ((f != NULL) && (fgetc(f) != EOF) && !(feof(f)))
@@ -147,7 +152,11 @@ CRYPTOGRAM* initCryptogram()
 		initTextAndCalculateEncounters(data, f);
 	}
 	fclose(f);
-	if (data->numOfLetters != NO_LETTERS_IN_TEXT) calculateFrequencies(data);
+	if (data->numOfLetters != NO_LETTERS_IN_TEXT)
+	{
+		calculateFrequencies(data);
+		qsort(data->letter, ALPHABET_SIZE, sizeof(LETTER), cmpByFrequency);
+	}
 	return data;
 }
 
@@ -201,20 +210,22 @@ void printText(char* text)
 void handleReplacementMenu(CRYPTOGRAM* data)
 {
 	//TODO
-	//Вывести список незаменённых букв
+	//Вывести текущий ключ шифрования и текст криптограммы
 	//попросить ввести букву для замены
 	//на какую букву
+	//замена
 	//успешная замена - ещё одна или главное меню
 }
 
 void handleRevertMenu(CRYPTOGRAM* data)
 {
 	//TODO
-	//Вывести список пар исходная буква - её последняя замена
-	//выбрать исходную букву
-	//показать для неё историю изменений из replacedTo
-	//совершить замену или выйти в меню замен
-	//ещё раз всё это или главное меню
+	//Вывести текущий ключ шифрования и текст криптограммы
+	//нет замен - сообщить
+	//последняя замена - предложить откат
+	//не последняя замена - предложить откат или возврат
+	//при выборе действия меняем curChange на эл-т вперёд или назад
+	//ещё раз или главное меню
 }
 
 void replaceLettersAutomatically(CRYPTOGRAM* data)
