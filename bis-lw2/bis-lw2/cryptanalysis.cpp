@@ -44,8 +44,8 @@ typedef struct Letter
 
 typedef struct ChangesListItem
 {
-	CHANGES_LIST_ITEM* prev;
-	CHANGES_LIST_ITEM* next;
+	struct ChangesListItem* prev;
+	struct ChangesListItem* next;
 	char originalLetter;
 	char replacedTo;
 } CHANGES_LIST_ITEM;
