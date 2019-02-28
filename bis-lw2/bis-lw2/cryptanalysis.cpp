@@ -19,10 +19,10 @@
 typedef enum OperationCode
 {
 	NULL_OPERATION,              //операция для инициализации
-	ANALYZE = '1',               //анализ частоты букв во входном файле и вывод предполагаемых замен в соответстви с частотами распределения букв русского алфавита
+	PRINT_ANALYSIS_RESULT_AND_SUGGEST_REPLACEMENT = '1', //вывод предполагаемой замены в соответстви с частотами распределения букв русского алфавита
 	PRINT_WORDS_BY_LENGTH,       //вывод на экран всех слов, сгруппированных по количеству букв
 	PRINT_WORDS_BY_UNDECIPHERED, //вывод на экран всех слов, сгруппированных по количеству нерасшифрованных на данный момент букв
-	PRINT_CRYPTOGRAM,                  //отображение криптограммы с указанием расшифрованного на данный момент текста
+	PRINT_CRYPTOGRAM,            //отображение криптограммы с указанием расшифрованного на данный момент текста
 	REPLACE_LETTERS,             //возможность замены букв в криптограмме
 	REVERT,                      //хранение и откат истории замены букв в криптограмме
 	AUTOREPLACEMENT,             //автоматическая замена букв
@@ -198,7 +198,7 @@ void printText(CRYPTOGRAM* data)
 	char* ptr = data->text;
 	while (*(ptr))
 	{
-		int curSymbolIndex = *(ptr)-'A';
+		int curSymbolIndex = *(ptr)-'А';
 		if ((data->letter + curSymbolIndex)->replacedTo == NO_REPLACEMENT) printf("%c", *(ptr));
 		else printf("%c", (data->letter + curSymbolIndex)->replacedTo);
 		ptr++;
@@ -210,7 +210,7 @@ void printEncryptionKey(LETTER* letter)
 {
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
-		printf("%c - ", (letter + i)->symbol);
+		printf("%c -> ", (letter + i)->symbol);
 		if ((letter + i)->replacedTo == NO_REPLACEMENT) printf("замена не определена");
 		else printf("%c", (letter + i)->replacedTo);
 		printf("\n");
@@ -257,15 +257,30 @@ char findLetterWithBiggestFrequencyFromUnusedAsReplacement(LETTER* letter)
 	return LETTERS_IN_ORDER_BY_FREQUENCY_DESC[index];
 }
 
+void printLettersFrequencies(LETTER* letter)
+{
+	printf("Частоты встреч букв во входной криптограмме:\n");
+	for (int i = 0; i < ALPHABET_SIZE; i++)
+	{
+		printf("%c -> %0.2f\n", (letter + i)->symbol, (letter + i)->frequencyInSrcText);
+	}
+	printf("\n");
+}
 
-void suggestReplacementBasingOnFrequencyAnalysis(CRYPTOGRAM* data)
+void printReplacementSuggestion(LETTER* letter)
+{
+	char srcLetter = findLetterWithBiggestFrequencyFromUndesiphered(letter);
+	char letterForReplacement = findLetterWithBiggestFrequencyFromUnusedAsReplacement(letter);
+	printf("Исходя из частотного анализа сделан вывод, что букву %c, возможно, следует поменять на %c.\n", srcLetter, letterForReplacement);
+	//TODO: выводить превью с предположенной заменой
+}
+
+void analyseFrequencyAndSuggestReplacement(CRYPTOGRAM* data)
 {
 	system("cls");
 
-	char srcLetter = findLetterWithBiggestFrequencyFromUndesiphered(data->letter);
-	char letterForReplacement = findLetterWithBiggestFrequencyFromUnusedAsReplacement(data->letter);
-	printf("Исходя из частотного анализа сделан вывод, что букву %c, возможно, следует поменять на %c.\n", srcLetter, letterForReplacement);
-	//TODO: выводить превью с предположенной заменой
+	printLettersFrequencies(data->letter);
+	printReplacementSuggestion(data->letter);
 
 	printf(RETURN_TO_MENU_MESSAGE);
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
@@ -339,7 +354,7 @@ void handleMainCycle(CRYPTOGRAM* data)
 		scanf("%c", &operationCode);
 		switch (operationCode)
 		{
-		case ANALYZE: suggestReplacementBasingOnFrequencyAnalysis(data); break;
+		case PRINT_ANALYSIS_RESULT_AND_SUGGEST_REPLACEMENT: analyseFrequencyAndSuggestReplacement(data); break;
 		case PRINT_WORDS_BY_LENGTH: printWordsInOrderByLength(data->text); break;
 		case PRINT_WORDS_BY_UNDECIPHERED: printWordsInOrderByUndeciphered(data->text); break;
 		case PRINT_CRYPTOGRAM: printCryptogram(data); break;
