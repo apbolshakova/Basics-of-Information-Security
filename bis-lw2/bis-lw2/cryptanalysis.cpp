@@ -10,7 +10,6 @@
 #define NO_REPLACEMENT 0
 #define NO_LETTERS_IN_TEXT 0
 #define RETURN_TO_MENU_BTN_CODE 32
-#define INPUT_CHAR_CODES_OFFSET 64
 #define DATA_PATH "input.txt"
 #define LETTERS_IN_ORDER_BY_FREQUENCY_DESC "оеаинтсрвлкмдпуяыьгзбчйчжшюцщэфъ"
 
@@ -93,6 +92,19 @@ BOOL isCapitalLetter(char item)
 {
 	if ('А' <= item && item <= 'Я') return TRUE;
 	else return FALSE;
+}
+
+BOOL isLowercaseLetter(char item)
+{
+	if ('а' <= item && item <= 'я') return TRUE;
+	else return FALSE;
+}
+
+char fixCodeForCyrillicCharFromInput(char item) //исправление считанных кодов символов, сдвиги найдены экспериментально
+{
+	if (-128 <= item && item <= -81) return item + 64;
+	if (-32 <= item && item <= -17) return item + 16;
+	return item;
 }
 
 void handleDataFromNewString(CRYPTOGRAM* data, char* str) //TODO: рефакторинг
@@ -319,13 +331,19 @@ char getLetterToReplace()
 {
 	char letter = '\n'; //для исправления проблемы с энтером в буфере
 	while (letter == '\n') scanf("%c", &letter);
-	letter += INPUT_CHAR_CODES_OFFSET; //сдвиг кодов букв из-за scanf-а
+	letter = fixCodeForCyrillicCharFromInput(letter);
 	while (!isCapitalLetter(letter))
 	{
-		printf("Недопустимый символ. Введите заглавную букву русского алфавита: ");
+		if (isLowercaseLetter(letter))
+		{
+			letter -= ALPHABET_SIZE; //сдвиг с маленьких букв на большие
+			break;
+		}
+
+		printf("Недопустимый символ. Введите букву русского алфавита: ");
 		scanf("%c", &letter);
 		while (letter == '\n') scanf("%c", &letter);
-		letter += INPUT_CHAR_CODES_OFFSET;
+		letter = fixCodeForCyrillicCharFromInput(letter);
 	}
 	return letter;
 }
@@ -335,7 +353,7 @@ void handleReplacementMenu(CRYPTOGRAM* data)
 	system("cls");
 	printEncryptionKey(data->letter);
 
-	printf("Введите заглавную русскую букву, замену которой необходимо провести: ");
+	printf("Введите букву, замену которой необходимо провести: ");
 	char srcLetter = getLetterToReplace();
 
 
