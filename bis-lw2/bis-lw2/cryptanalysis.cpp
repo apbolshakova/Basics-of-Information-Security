@@ -60,6 +60,12 @@ typedef struct Cryptogram
 } CRYPTOGRAM;
 
 //выделить массив слов (слово содержит символы, свою длину, сколько разных букв капсом), получить наибольшую длину
+typedef struct Word
+{
+	char* chars;
+	int len;
+	int numOfUndecipheredLetters;
+} WORD;
 
 void initLetters(LETTER* letter)
 {
@@ -135,12 +141,21 @@ void calculateFrequencies(CRYPTOGRAM* data)
 	}
 }
 
-int cmpByFrequencyDesc(const void *a, const void *b) //сравнить частоты дл€ сортировки по убыванию
+int cmpByFrequencyDesc(const void *a, const void *b)
 {
 	float aFrq = ((LETTER*)a)->frequencyInSrcText;
 	float bFrq = ((LETTER*)b)->frequencyInSrcText;
 	if (aFrq > bFrq) return -1;
 	if (aFrq < bFrq) return 1;
+	return 0;
+}
+
+int cmpBySymbolAsc(const void *a, const void *b)
+{
+	float aSymbol = ((LETTER*)a)->symbol;
+	float bSymbol = ((LETTER*)b)->symbol;
+	if (aSymbol > bSymbol) return -1; //кириллица имеет отрицательные коды
+	if (aSymbol < bSymbol) return 1;
 	return 0;
 }
 
@@ -160,11 +175,7 @@ CRYPTOGRAM* initCryptogram()
 		initTextAndCalculateEncounters(data, f);
 	}
 	fclose(f);
-	if (data->numOfLetters != NO_LETTERS_IN_TEXT)
-	{
-		calculateFrequencies(data);
-		qsort(data->letter, ALPHABET_SIZE, sizeof(*(data->letter)), cmpByFrequencyDesc);
-	}
+	if (data->numOfLetters != NO_LETTERS_IN_TEXT) calculateFrequencies(data);
 	return data;
 }
 
@@ -182,22 +193,43 @@ void printMainMenu()
 	printf("¬ведите код нужной команды (любой код, кроме перечисленных, будет проигнорирован): ");
 }
 
-void printText(char* text)
+void printText(CRYPTOGRAM* data)
 {
-	char* ptr = text;
-	while (*(ptr)) printf("%c", *(ptr++));
+	char* ptr = data->text;
+	while (*(ptr))
+	{
+		int curSymbolIndex = *(ptr)-'A';
+		if ((data->letter + curSymbolIndex)->replacedTo == NO_REPLACEMENT) printf("%c", *(ptr));
+		else printf("%c", (data->letter + curSymbolIndex)->replacedTo);
+		ptr++;
+	}
 	printf("\n\n");
+}
+
+void printEncryptionKey(LETTER* letter)
+{
+	for (int i = 0; i < ALPHABET_SIZE; i++)
+	{
+		printf("%c - ", (letter + i)->symbol);
+		if ((letter + i)->replacedTo == NO_REPLACEMENT) printf("замена не определена");
+		else printf("%c", (letter + i)->replacedTo);
+		printf("\n");
+	}
+	printf("\n");
 }
 
 char findLetterWithBiggestFrequencyFromUndesiphered(LETTER* letter)
 {
 	int index = 0;
+	qsort(letter, ALPHABET_SIZE, sizeof(*letter), cmpByFrequencyDesc); //отсортировать буквы по частотам
 	while (index < ALPHABET_SIZE)
 	{
 		if ((letter + index)->replacedTo == NO_REPLACEMENT) break;
 		else index++;
 	}
-	return (letter + index)->symbol;
+	char result = (letter + index)->symbol;
+	qsort(letter, ALPHABET_SIZE, sizeof(*letter), cmpBySymbolAsc); //вернуть сортировку по символам
+	return result;
 }
 
 BOOL isUsedAsReplacement(char symbolToCheck, LETTER* letter)
@@ -241,6 +273,8 @@ void suggestReplacementBasingOnFrequencyAnalysis(CRYPTOGRAM* data)
 
 void printWordsInOrderByLength(char* text)
 {
+	//WORD* word = parseTextIntoWords(text); //указатель на первое слово
+	//qsort(word, число слов, sizeof(WORD), cmpByFrequencyDesc);
 	//TODO
 	//выделить массив слов (слово содержит символы, свою длину, сколько разных букв капсом), получить наибольшую длину
 	//вывести от наибольшей длины к наименьшей
@@ -257,10 +291,10 @@ void printCryptogram(CRYPTOGRAM* data)
 {
 	system("cls");
 	printf("“екущий ключ шифровани€:\n");
-
+	printEncryptionKey(data->letter);
 
 	printf("“екст криптограммы с выполненными заменами:\n\n");
-	printText(data->text);
+	printText(data);
 
 	printf(RETURN_TO_MENU_MESSAGE);
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
