@@ -16,13 +16,13 @@
 #define SUCESS_INIT_MESSAGE "Исходный текст криптограммы успешно загружен.\n"
 #define RETURN_TO_MENU_MESSAGE "Нажмите пробел, чтобы вернуться в главное меню.\n"
 
-typedef enum 
+typedef enum OperationCode
 {
 	NULL_OPERATION,              //операция для инициализации
 	ANALYZE = '1',               //анализ частоты букв во входном файле и вывод предполагаемых замен в соответстви с частотами распределения букв русского алфавита
 	PRINT_WORDS_BY_LENGTH,       //вывод на экран всех слов, сгруппированных по количеству букв
 	PRINT_WORDS_BY_UNDECIPHERED, //вывод на экран всех слов, сгруппированных по количеству нерасшифрованных на данный момент букв
-	PRINT_TEXT,                  //отображение криптограммы с указанием расшифрованного на данный момент текста
+	PRINT_CRYPTOGRAM,                  //отображение криптограммы с указанием расшифрованного на данный момент текста
 	REPLACE_LETTERS,             //возможность замены букв в криптограмме
 	REVERT,                      //хранение и откат истории замены букв в криптограмме
 	AUTOREPLACEMENT,             //автоматическая замена букв
@@ -37,7 +37,7 @@ typedef enum Bool
 
 typedef struct Letter
 {
-	int indexInAlphabet; //какая буква в алфавите (0 - А); в памяти буквы будут отсортированы по частоте (чтобы не сортировать постоянно)
+	char symbol;
 	int encounteredInSrcText;
 	float frequencyInSrcText;
 	char replacedTo;
@@ -59,11 +59,13 @@ typedef struct Cryptogram
 	CHANGES_LIST_ITEM* curChange;
 } CRYPTOGRAM;
 
+//выделить массив слов (слово содержит символы, свою длину, сколько разных букв капсом), получить наибольшую длину
+
 void initLetters(LETTER* letter)
 {
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
-		(letter + i)->indexInAlphabet = i;
+		(letter + i)->symbol = 'А' + i;
 		(letter + i)->encounteredInSrcText = 0;
 		(letter + i)->frequencyInSrcText = 0;
 		(letter + i)->replacedTo = NO_REPLACEMENT;
@@ -169,7 +171,7 @@ CRYPTOGRAM* initCryptogram()
 void printMainMenu()
 {
 	printf("Вас приветствует программа, реализующая функции инструмента криптоаналитика. Возможные действия:\n");
-	printf("1. Анализировать частоты букв и предложить замены\n");
+	printf("1. Предложить замену на основе частотного анализа\n");
 	printf("2. Вывести слова, сгруппированные по количеству букв\n");
 	printf("3. Вывести слова, сгруппированные по количеству нерасшифрованных букв\n");
 	printf("4. Отобразить криптограмму\n");
@@ -180,11 +182,61 @@ void printMainMenu()
 	printf("Введите код нужной команды (любой код, кроме перечисленных, будет проигнорирован): ");
 }
 
-void suggestReplacementsBasingOnFrequencyAnalysis(CRYPTOGRAM* data)
+void printText(char* text)
 {
-	//TODO
-	//
-	//Найти наибольшую частоту, для которой не была выбрана замена и предложить заменить букву этой частоты на 1-ую неиспользованную в заменах букву из LETTERS_IN_ORDER_BY_FREQUENCY_DESC
+	char* ptr = text;
+	while (*(ptr)) printf("%c", *(ptr++));
+	printf("\n\n");
+}
+
+char findLetterWithBiggestFrequencyFromUndesiphered(LETTER* letter)
+{
+	int index = 0;
+	while (index < ALPHABET_SIZE)
+	{
+		if ((letter + index)->replacedTo == NO_REPLACEMENT) break;
+		else index++;
+	}
+	return (letter + index)->symbol;
+}
+
+BOOL isUsedAsReplacement(char symbolToCheck, LETTER* letter)
+{
+	BOOL isUsed = FALSE;
+	for (int i = 0; i < ALPHABET_SIZE; i++)
+	{
+		if (symbolToCheck == (letter + i)->replacedTo)
+		{
+			isUsed = TRUE;
+			break;
+		}
+	}
+	return isUsed;
+}
+
+char findLetterWithBiggestFrequencyFromUnusedAsReplacement(LETTER* letter)
+{
+	int index = 0;
+	while (index < ALPHABET_SIZE)
+	{
+		if (isUsedAsReplacement(LETTERS_IN_ORDER_BY_FREQUENCY_DESC[index], letter)) index++;
+		else break;
+	}
+	return LETTERS_IN_ORDER_BY_FREQUENCY_DESC[index];
+}
+
+
+void suggestReplacementBasingOnFrequencyAnalysis(CRYPTOGRAM* data)
+{
+	system("cls");
+
+	char srcLetter = findLetterWithBiggestFrequencyFromUndesiphered(data->letter);
+	char letterForReplacement = findLetterWithBiggestFrequencyFromUnusedAsReplacement(data->letter);
+	printf("Исходя из частотного анализа сделан вывод, что букву %c, возможно, следует поменять на %c.\n", srcLetter, letterForReplacement);
+	//TODO: выводить превью с предположенной заменой
+
+	printf(RETURN_TO_MENU_MESSAGE);
+	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
 void printWordsInOrderByLength(char* text)
@@ -201,14 +253,14 @@ void printWordsInOrderByUndeciphered(char* text)
 	//вывести от наибольшей длины к наименьшей
 }
 
-void printText(char* text)
+void printCryptogram(CRYPTOGRAM* data)
 {
 	system("cls");
+	printf("Текущий ключ шифрования:\n");
+
+
 	printf("Текст криптограммы с выполненными заменами:\n\n");
-    
-	char* ptr = text;
-	while (*(ptr)) printf("%c", *(ptr++));
-	printf("\n\n");
+	printText(data->text);
 
 	printf(RETURN_TO_MENU_MESSAGE);
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
@@ -253,13 +305,14 @@ void handleMainCycle(CRYPTOGRAM* data)
 		scanf("%c", &operationCode);
 		switch (operationCode)
 		{
-		case ANALYZE: suggestReplacementsBasingOnFrequencyAnalysis(data); break;
+		case ANALYZE: suggestReplacementBasingOnFrequencyAnalysis(data); break;
 		case PRINT_WORDS_BY_LENGTH: printWordsInOrderByLength(data->text); break;
 		case PRINT_WORDS_BY_UNDECIPHERED: printWordsInOrderByUndeciphered(data->text); break;
-		case PRINT_TEXT: printText(data->text); break;
+		case PRINT_CRYPTOGRAM: printCryptogram(data); break;
 		case REPLACE_LETTERS: handleReplacementMenu(data); break;
 		case REVERT: handleRevertMenu(data); break;
 		case AUTOREPLACEMENT: replaceLettersAutomatically(data); break;
+		//TODO: функция, выводящая частоты букв исходного текста
 		default: break;
 		}
 	} while (operationCode != EXIT);
