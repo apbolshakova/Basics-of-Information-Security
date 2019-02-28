@@ -9,6 +9,8 @@
 #define ALPHABET_SIZE 32
 #define NO_REPLACEMENT 0
 #define NO_LETTERS_IN_TEXT 0
+#define LETTER_IS_NOT_FOUND 0
+#define INITIAL_FRQ 0.0
 #define RETURN_TO_MENU_BTN_CODE 32
 #define DATA_PATH "input.txt"
 #define LETTERS_IN_ORDER_BY_FREQUENCY_DESC "оеаинтсрвлкмдпу€ыьгзбчйчжшюцщэфъ"
@@ -243,16 +245,22 @@ void printEncryptionKey(LETTER* letter)
 	printf("\n");
 }
 
-char findLetterWithBiggestFrequencyFromUndesiphered(LETTER* letter)
+LETTER* findLetterWithBiggestFrequencyFromUndesiphered(LETTER* letter)
 {
+	BOOL exists = FALSE;
 	int index = 0;
+	LETTER* result = LETTER_IS_NOT_FOUND;
 	qsort(letter, ALPHABET_SIZE, sizeof(*letter), cmpByFrequencyDesc); //отсортировать буквы по частотам
 	while (index < ALPHABET_SIZE)
 	{
-		if ((letter + index)->replacedTo == NO_REPLACEMENT) break;
+		if ((letter + index)->replacedTo == NO_REPLACEMENT) 
+		{
+			exists = TRUE;
+			break;
+		}
 		else index++;
 	}
-	char result = (letter + index)->symbol;
+	if (exists) result = letter + index;
 	qsort(letter, ALPHABET_SIZE, sizeof(*letter), cmpBySymbolAsc); //вернуть сортировку по символам
 	return result;
 }
@@ -287,16 +295,17 @@ void printLettersFrequencies(LETTER* letter)
 	printf("„астоты встреч букв во входной криптограмме:\n");
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
-		printf("%c -> %0.2f\n", (letter + i)->symbol, (letter + i)->frequencyInSrcText);
+		printf("%c -> %0.4f\n", (letter + i)->symbol, (letter + i)->frequencyInSrcText);
 	}
 	printf("\n");
 }
 
 void printReplacementSuggestion(LETTER* letter)
 {
-	char srcLetter = findLetterWithBiggestFrequencyFromUndesiphered(letter);
+	LETTER* srcLetter = findLetterWithBiggestFrequencyFromUndesiphered(letter);
+	//TODO: добавить проверку, не вернулс€ ли ноль в srcLetter
 	char letterForReplacement = findLetterWithBiggestFrequencyFromUnusedAsReplacement(letter);
-	printf("»сход€ из частотного анализа сделан вывод, что букву %c, возможно, следует помен€ть на %c.\n", srcLetter, letterForReplacement);
+	printf("»сход€ из частотного анализа сделан вывод, что букву %c, возможно, следует помен€ть на %c.\n", srcLetter->symbol, letterForReplacement);
 	//TODO: выводить превью с предположенной заменой
 }
 
@@ -408,10 +417,24 @@ void handleRevertMenu(CRYPTOGRAM* data)
 
 void replaceLettersAutomatically(CRYPTOGRAM* data)
 {
-	//TODO
-	//сортировать буквы letters по частоте (по убыванию) в тексте
-	//от 0 до 31: уникальна€ частота - сменить на i-ую из сортированного списка дл€ русского алфавита
-	//            не уникальна€ частота - прекратить автозамену
+	float prevUndesipheredLetterFrq = INITIAL_FRQ;
+	float curUndesipheredLetterFrq = INITIAL_FRQ;
+	LETTER* srcLetter = LETTER_IS_NOT_FOUND;
+	do
+	{
+		prevUndesipheredLetterFrq = curUndesipheredLetterFrq;
+		srcLetter = findLetterWithBiggestFrequencyFromUndesiphered(data->letter);
+		if (srcLetter != LETTER_IS_NOT_FOUND)
+		{
+			curUndesipheredLetterFrq = srcLetter->frequencyInSrcText;
+			if (curUndesipheredLetterFrq != prevUndesipheredLetterFrq)
+			{
+				char letterForReplacement = findLetterWithBiggestFrequencyFromUnusedAsReplacement(data->letter);
+				replaceLetter(srcLetter->symbol, letterForReplacement, data);
+			}
+			else break;
+		}
+	} while (srcLetter != LETTER_IS_NOT_FOUND);
 }
 
 void handleMainCycle(CRYPTOGRAM* data)
