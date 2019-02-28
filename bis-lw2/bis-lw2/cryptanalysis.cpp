@@ -3,12 +3,14 @@
 #include <stdlib.h>
 #include <locale.h>
 #include <conio.h>
+#include <ctype.h>
 
 #define SIZE_OF_STRING_TO_COPY 1000
 #define ALPHABET_SIZE 32
 #define NO_REPLACEMENT 0
 #define NO_LETTERS_IN_TEXT 0
 #define RETURN_TO_MENU_BTN_CODE 32
+#define INPUT_CHAR_CODES_OFFSET 64
 #define DATA_PATH "input.txt"
 #define LETTERS_IN_ORDER_BY_FREQUENCY_DESC "оеаинтсрвлкмдпуяыьгзбчйчжшюцщэфъ"
 
@@ -59,13 +61,12 @@ typedef struct Cryptogram
 	CHANGES_LIST_ITEM* curChange;
 } CRYPTOGRAM;
 
-//выделить массив слов (слово содержит символы, свою длину, сколько разных букв капсом), получить наибольшую длину
-typedef struct Word
+typedef struct ParsedWord
 {
 	char* chars;
 	int len;
 	int numOfUndecipheredLetters;
-} WORD;
+} PARSED_WORD;
 
 void initLetters(LETTER* letter)
 {
@@ -88,7 +89,7 @@ CHANGES_LIST_ITEM* initChangesList()
 	return initialItem;
 }
 
-BOOL isLetter(char item)
+BOOL isCapitalLetter(char item)
 {
 	if ('А' <= item && item <= 'Я') return TRUE;
 	else return FALSE;
@@ -112,7 +113,7 @@ void handleDataFromNewString(CRYPTOGRAM* data, char* str) //TODO: рефакторинг
 	while (*str) //копировать символы
 	{
 		*(data->text) = *str;
-		if (isLetter(*(data->text)))
+		if (isCapitalLetter(*(data->text)))
 		{
 			data->numOfLetters++;
 			(data->letter + (*(data->text) - 'А'))->encounteredInSrcText++;
@@ -195,6 +196,7 @@ void printMainMenu()
 
 void printText(CRYPTOGRAM* data)
 {
+	printf("Текст криптограммы с выполненными заменами:\n\n");
 	char* ptr = data->text;
 	while (*(ptr))
 	{
@@ -208,6 +210,7 @@ void printText(CRYPTOGRAM* data)
 
 void printEncryptionKey(LETTER* letter)
 {
+	printf("Текущий ключ шифрования:\n");
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
 		printf("%c -> ", (letter + i)->symbol);
@@ -305,24 +308,43 @@ void printWordsInOrderByUndeciphered(char* text)
 void printCryptogram(CRYPTOGRAM* data)
 {
 	system("cls");
-	printf("Текущий ключ шифрования:\n");
 	printEncryptionKey(data->letter);
-
-	printf("Текст криптограммы с выполненными заменами:\n\n");
 	printText(data);
 
 	printf(RETURN_TO_MENU_MESSAGE);
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
+char getLetterToReplace()
+{
+	char letter = '\n'; //для исправления проблемы с энтером в буфере
+	while (letter == '\n') scanf("%c", &letter);
+	letter += INPUT_CHAR_CODES_OFFSET; //сдвиг кодов букв из-за scanf-а
+	while (!isCapitalLetter(letter))
+	{
+		printf("Недопустимый символ. Введите заглавную букву русского алфавита: ");
+		scanf("%c", &letter);
+		while (letter == '\n') scanf("%c", &letter);
+		letter += INPUT_CHAR_CODES_OFFSET;
+	}
+	return letter;
+}
+
 void handleReplacementMenu(CRYPTOGRAM* data)
 {
-	//TODO
-	//Вывести текущий ключ шифрования и текст криптограммы
+	system("cls");
+	printEncryptionKey(data->letter);
+
+	printf("Введите заглавную русскую букву, замену которой необходимо провести: ");
+	char srcLetter = getLetterToReplace();
+
+
 	//попросить ввести букву для замены
 	//на какую букву
 	//замена
 	//успешная замена - ещё одна или главное меню
+	printf(RETURN_TO_MENU_MESSAGE);
+	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
 void handleRevertMenu(CRYPTOGRAM* data)
