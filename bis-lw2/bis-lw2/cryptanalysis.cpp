@@ -173,8 +173,8 @@ int cmpBySymbolAsc(const void *a, const void *b)
 {
 	float aSymbol = ((LETTER*)a)->symbol;
 	float bSymbol = ((LETTER*)b)->symbol;
-	if (aSymbol > bSymbol) return -1; //кириллица имеет отрицательные коды
-	if (aSymbol < bSymbol) return 1;
+	if (aSymbol > bSymbol) return 1;
+	if (aSymbol < bSymbol) return -1;
 	return 0;
 }
 
@@ -216,11 +216,15 @@ void printText(CRYPTOGRAM* data)
 {
 	printf("Текст криптограммы с выполненными заменами:\n\n");
 	char* ptr = data->text;
-	while (*(ptr))
+	while (*ptr)
 	{
-		int curSymbolIndex = *(ptr)-'А';
-		if ((data->letter + curSymbolIndex)->replacedTo == NO_REPLACEMENT) printf("%c", *(ptr));
-		else printf("%c", (data->letter + curSymbolIndex)->replacedTo);
+		if (isLetter(*ptr))
+		{
+			int curSymbolIndex = *(ptr)-'А';
+			if ((data->letter + curSymbolIndex)->replacedTo == NO_REPLACEMENT) printf("%c", *ptr);
+			else printf("%c", (data->letter + curSymbolIndex)->replacedTo);
+		}
+		else printf("%c", *ptr);
 		ptr++;
 	}
 	printf("\n\n");
