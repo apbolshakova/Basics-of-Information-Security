@@ -100,6 +100,12 @@ BOOL isLowercaseLetter(char item)
 	else return FALSE;
 }
 
+BOOL isLetter(char item)
+{
+	if ('А' <= item && item <= 'я') return TRUE;
+	else return FALSE;
+}
+
 char fixCodeForCyrillicCharFromInput(char item) //исправление считанных кодов символов, сдвиги найдены экспериментально
 {
 	if (-128 <= item && item <= -81) return item + 64;
@@ -327,19 +333,13 @@ void printCryptogram(CRYPTOGRAM* data)
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
-char getLetterToReplace()
+char getCyrrilicLetter()
 {
 	char letter = '\n'; //для исправления проблемы с энтером в буфере
 	while (letter == '\n') scanf("%c", &letter);
 	letter = fixCodeForCyrillicCharFromInput(letter);
-	while (!isCapitalLetter(letter))
+	while (!isLetter(letter))
 	{
-		if (isLowercaseLetter(letter))
-		{
-			letter -= ALPHABET_SIZE; //сдвиг с маленьких букв на большие
-			break;
-		}
-
 		printf("Недопустимый символ. Введите букву русского алфавита: ");
 		scanf("%c", &letter);
 		while (letter == '\n') scanf("%c", &letter);
@@ -348,21 +348,47 @@ char getLetterToReplace()
 	return letter;
 }
 
+CHANGES_LIST_ITEM* addChangeToHistory(char srcLetter, char letterForReplacement, CHANGES_LIST_ITEM* prevItem)
+{
+	CHANGES_LIST_ITEM* newItem = (CHANGES_LIST_ITEM*)malloc(2 * sizeof(CHANGES_LIST_ITEM*) + 2 * sizeof(char));
+	newItem->prev = prevItem;
+	newItem->next = NULL;
+	newItem->originalLetter = srcLetter;
+	newItem->replacedTo = letterForReplacement;
+}
+
+void replaceLetter(char srcLetter, char letterForReplacement, CRYPTOGRAM* data)
+{
+	(data->letter + srcLetter - 'А')->replacedTo = letterForReplacement;
+	data->curChange = addChangeToHistory(srcLetter, letterForReplacement, data->curChange);
+}
+
 void handleReplacementMenu(CRYPTOGRAM* data)
 {
 	system("cls");
 	printEncryptionKey(data->letter);
 
 	printf("Введите букву, замену которой необходимо провести: ");
-	char srcLetter = getLetterToReplace();
+	char srcLetter = getCyrrilicLetter();
+	if (isLowercaseLetter(srcLetter)) srcLetter -= ALPHABET_SIZE; //сдвиг с маленьких букв на большие
+	
+	printf("Введите букву, на которую её необходимо заменить: ");
+	char letterForReplacement = getCyrrilicLetter();
+	if (isCapitalLetter(letterForReplacement)) letterForReplacement += ALPHABET_SIZE;
+	while (isUsedAsReplacement(letterForReplacement, data->letter))
+	{
+		printf("Эта буква уже использована в качестве замены. Введите другую букву русского алфавита: ");
+		letterForReplacement = getCyrrilicLetter();
+		if (isCapitalLetter(letterForReplacement)) letterForReplacement += ALPHABET_SIZE;
+	} 
+	replaceLetter(srcLetter, letterForReplacement, data);
 
-
-	//попросить ввести букву для замены
-	//на какую букву
-	//замена
-	//успешная замена - ещё одна или главное меню
+	system("cls");
+	printf("Замена проведена успешно.\n");
+	printEncryptionKey(data->letter);
 	printf(RETURN_TO_MENU_MESSAGE);
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
+	//TODO: несколько замен без выхода в главное меню
 }
 
 void handleRevertMenu(CRYPTOGRAM* data)
