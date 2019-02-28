@@ -37,6 +37,7 @@ typedef enum Bool
 
 typedef struct Letter
 {
+	int indexInAlphabet; //кака€ буква в алфавите (0 - ј); в пам€ти буквы будут отсортированы по частоте (чтобы не сортировать посто€нно)
 	int encounteredInSrcText;
 	float frequencyInSrcText;
 	char replacedTo;
@@ -62,6 +63,7 @@ void initLetters(LETTER* letter)
 {
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
+		(letter + i)->indexInAlphabet = i;
 		(letter + i)->encounteredInSrcText = 0;
 		(letter + i)->frequencyInSrcText = 0;
 		(letter + i)->replacedTo = NO_REPLACEMENT;
@@ -105,7 +107,7 @@ void handleDataFromNewString(CRYPTOGRAM* data, char* str) //TODO: рефакторинг
 		if (isLetter(*(data->text)))
 		{
 			data->numOfLetters++;
-			(data->letter + (*(data->text) + 64))->encounteredInSrcText++;
+			(data->letter + (*(data->text) - 'ј'))->encounteredInSrcText++;
 		}
 		(data->text)++;
 		str++;
@@ -131,9 +133,13 @@ void calculateFrequencies(CRYPTOGRAM* data)
 	}
 }
 
-int cmpByFrequency()
+int cmpByFrequencyDesc(const void *a, const void *b) //сравнить частоты дл€ сортировки по убыванию
 {
-	//TODO: реализовать
+	float aFrq = ((LETTER*)a)->frequencyInSrcText;
+	float bFrq = ((LETTER*)b)->frequencyInSrcText;
+	if (aFrq > bFrq) return -1;
+	if (aFrq < bFrq) return 1;
+	return 0;
 }
 
 CRYPTOGRAM* initCryptogram()
@@ -155,7 +161,7 @@ CRYPTOGRAM* initCryptogram()
 	if (data->numOfLetters != NO_LETTERS_IN_TEXT)
 	{
 		calculateFrequencies(data);
-		qsort(data->letter, ALPHABET_SIZE, sizeof(LETTER), cmpByFrequency);
+		qsort(data->letter, ALPHABET_SIZE, sizeof(*(data->letter)), cmpByFrequencyDesc);
 	}
 	return data;
 }
@@ -177,6 +183,7 @@ void printMainMenu()
 void suggestReplacementsBasingOnFrequencyAnalysis(CRYPTOGRAM* data)
 {
 	//TODO
+	//
 	//Ќайти наибольшую частоту, дл€ которой не была выбрана замена и предложить заменить букву этой частоты на 1-ую неиспользованную в заменах букву из LETTERS_IN_ORDER_BY_FREQUENCY_DESC
 }
 
