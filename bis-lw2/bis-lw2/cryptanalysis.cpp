@@ -15,7 +15,6 @@
 #define DATA_PATH "input.txt"
 #define LETTERS_IN_ORDER_BY_FREQUENCY_DESC "оеаинтсрвлкмдпуяыьгзбчйчжшюцщэфъ"
 
-#define INVALID_DATA_MESSAGE "Полученные данные не подходят для расшифровки: отсутствуют буквы.\n"
 #define SUCESS_INIT_MESSAGE "Исходный текст криптограммы успешно загружен.\n"
 #define RETURN_TO_MENU_MESSAGE "Нажмите пробел, чтобы вернуться в главное меню.\n"
 
@@ -115,22 +114,20 @@ char fixCodeForCyrillicCharFromInput(char item) //исправление считанных кодов си
 	return item;
 }
 
-void handleDataFromNewString(CRYPTOGRAM* data, char* str) //TODO: рефакторинг
+int moveTextPtrToTheEndAndGetSizeOfText(char* text)
 {
-	int sizeOfOldText = 0; 
-	char* sav = data->text;
-	while (*(data->text)) //получить место, где строка кончается
+	int sizeOfText = 0;
+	while (*(text))
 	{
-		sizeOfOldText++;
-		data->text++;
+		sizeOfText++;
+		text++;
 	}
+	return sizeOfText;
+}
 
-	data->text = sav;
-	data->text = (char*) realloc(data->text, (sizeOfOldText + SIZE_OF_STRING_TO_COPY) * sizeof(char)); //увеличить память
-	
-	sav = data->text;
-	data->text += sizeOfOldText;
-	while (*str) //копировать символы
+void copyStringAndCalculateLettersEncounters(CRYPTOGRAM* data, char* str)
+{
+	while (*str)
 	{
 		*(data->text) = *str;
 		if (isCapitalLetter(*(data->text)))
@@ -142,6 +139,19 @@ void handleDataFromNewString(CRYPTOGRAM* data, char* str) //TODO: рефакторинг
 		str++;
 	}
 	*(data->text) = '\0';
+}
+
+void handleDataFromNewString(CRYPTOGRAM* data, char* str)
+{
+	char* sav = data->text;
+	int sizeOfOldText = moveTextPtrToTheEndAndGetSizeOfText(data->text);
+
+	data->text = sav;
+	data->text = (char*) realloc(data->text, (sizeOfOldText + SIZE_OF_STRING_TO_COPY) * sizeof(char));
+	sav = data->text;
+
+	data->text += sizeOfOldText;
+	copyStringAndCalculateLettersEncounters(data, str);
 	data->text = sav;
 }
 
@@ -344,7 +354,7 @@ void printCryptogram(CRYPTOGRAM* data)
 
 char getCyrrilicLetter()
 {
-	char letter = '\n'; //для исправления проблемы с энтером в буфере
+	char letter = '\n'; //для исправления проблемы с энтером во входном потоке
 	while (letter == '\n') scanf("%c", &letter);
 	letter = fixCodeForCyrillicCharFromInput(letter);
 	while (!isLetter(letter))
@@ -357,20 +367,19 @@ char getCyrrilicLetter()
 	return letter;
 }
 
-CHANGES_LIST_ITEM* addChangeToHistory(char srcLetter, char letterForReplacement, CHANGES_LIST_ITEM* prevItem)
+CHANGES_LIST_ITEM* addNewElementToHistory(char srcLetter, char letterForReplacement, CRYPTOGRAM* data)
 {
 	CHANGES_LIST_ITEM* newItem = (CHANGES_LIST_ITEM*)malloc(2 * sizeof(CHANGES_LIST_ITEM*) + 2 * sizeof(char));
-	newItem->prev = prevItem;
+	newItem->prev = data->curChange;
 	newItem->next = NULL;
 	newItem->originalLetter = srcLetter;
 	newItem->replacedTo = letterForReplacement;
-	return newItem;
+	data->curChange = newItem;
 }
 
-void replaceLetterAndUpdateHistory(char srcLetter, char letterForReplacement, CRYPTOGRAM* data)
+void replaceLetter(char srcLetter, char letterForReplacement, CRYPTOGRAM* data)
 {
 	(data->letter + srcLetter - 'А')->replacedTo = letterForReplacement;
-	data->curChange = addChangeToHistory(srcLetter, letterForReplacement, data->curChange);
 }
 
 void handleReplacementMenu(CRYPTOGRAM* data)
@@ -391,7 +400,8 @@ void handleReplacementMenu(CRYPTOGRAM* data)
 		letterForReplacement = getCyrrilicLetter();
 		if (isCapitalLetter(letterForReplacement)) letterForReplacement += ALPHABET_SIZE;
 	} 
-	replaceLetterAndUpdateHistory(srcLetter, letterForReplacement, data);
+	replaceLetter(srcLetter, letterForReplacement, data);
+	addNewElementToHistory(srcLetter, letterForReplacement, data);
 
 	system("cls");
 	printf("Замена проведена успешно.\n");
@@ -401,15 +411,46 @@ void handleReplacementMenu(CRYPTOGRAM* data)
 	//TODO: несколько замен без выхода в главное меню
 }
 
+void undoCurChange(CRYPTOGRAM* data)
+{
+	
+}
+
+void redoCurChange(CRYPTOGRAM* data)
+{
+
+}
+
 void handleRevertMenu(CRYPTOGRAM* data)
 {
-	//TODO
-	//Вывести текущий ключ шифрования и текст криптограммы
-	//нет замен - сообщить
-	//последняя замена - предложить откат
-	//не последняя замена - предложить откат или возврат
-	//при выборе действия меняем curChange на эл-т вперёд или назад
-	//ещё раз или главное меню
+	int operationCode = 0; //TODO: завести enum для кодов операций с историей
+	do
+	{
+		system("cls");
+
+		if (data->curChange->prev == NULL && data->curChange->next == NULL)
+		{
+			printf("История замен пуста.\n");
+		}
+		else
+		{
+			if (data->curChange->prev != NULL) printf("2. Отменить последнее действие: замену %c на %c\n",
+				data->curChange->originalLetter,
+				data->curChange->replacedTo);
+			if (data->curChange->next != NULL) printf("3. Восстановить последнее отменённое действие: замену %c на %c\n",
+				data->curChange->next->originalLetter,
+				data->curChange->next->replacedTo);
+		}
+		printf("1. Выход в главное меню\n");
+		printf("Введите код нужной команды (любой код, кроме перечисленных, будет проигнорирован): ");
+		scanf("%c", &operationCode);
+		switch (operationCode)
+		{
+		case '2': if (data->curChange->prev != NULL) undoCurChange(data); break;
+		case '3': if (data->curChange->next != NULL) redoCurChange(data); break;
+		default: break;
+		}
+	} while (operationCode != '1');
 }
 
 void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data)
@@ -427,7 +468,8 @@ void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data)
 			if (curUndesipheredLetterFrq != prevUndesipheredLetterFrq)
 			{
 				char letterForReplacement = findLetterWithMaxFrequencyFromUnusedAsReplacement(data->letter); //здесь проверка данных не нужна, т.к. кол-во символов в ключе шифрования одинаковое кол-во
-				replaceLetterAndUpdateHistory(srcLetter->symbol, letterForReplacement, data);
+				replaceLetter(srcLetter->symbol, letterForReplacement, data);
+				addNewElementToHistory(srcLetter->symbol, letterForReplacement, data);
 				printf("Символ %c был заменён на %c.\n", srcLetter->symbol, letterForReplacement);
 			}
 			else break;
@@ -461,7 +503,6 @@ void handleMainCycle(CRYPTOGRAM* data)
 		case REPLACE_LETTERS: handleReplacementMenu(data); break;
 		case REVERT: handleRevertMenu(data); break;
 		case AUTOREPLACEMENT: handleAutoreplacement(data); break;
-		//TODO: функция, выводящая частоты букв исходного текста
 		default: break;
 		}
 	} while (operationCode != EXIT);
@@ -474,7 +515,7 @@ int main(void)
 	CRYPTOGRAM* data = initCryptogram();
 	if (data->numOfLetters == NO_LETTERS_IN_TEXT)
 	{
-		printf(INVALID_DATA_MESSAGE);
+		printf("Полученные данные не подходят для расшифровки: отсутствуют буквы.\n");
 		_getch();
 	}
 	else handleMainCycle(data);
