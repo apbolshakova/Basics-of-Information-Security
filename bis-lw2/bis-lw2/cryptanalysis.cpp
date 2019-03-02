@@ -9,6 +9,7 @@
 #define ALPHABET_SIZE 32
 #define NO_REPLACEMENT 0
 #define NO_LETTERS_IN_TEXT 0
+#define NO_LETTERS_IN_WORD 0
 #define LETTER_IS_NOT_FOUND 0
 #define INITIAL_FRQ 0.0
 #define RETURN_TO_MENU_BTN_CODE 32
@@ -53,20 +54,29 @@ typedef struct ChangesListItem
 	char replacedTo;
 } CHANGES_LIST_ITEM;
 
+typedef struct wordListItem
+{
+	char* chars;
+	int len;
+	int numOfUndecipheredLetters;
+	WORD_LIST_ITEM* nextWord;
+} WORD_LIST_ITEM;
+
+typedef struct wordsInfo
+{
+	WORD_LIST_ITEM* firstWord;
+	int numOfWords;
+	int maxWordLen;
+} WORDS_INFO;
+
 typedef struct Cryptogram
 {
 	char* text;
 	int numOfLetters;
 	LETTER* letter;
 	CHANGES_LIST_ITEM* curChange;
+	WORDS_INFO* words;
 } CRYPTOGRAM;
-
-typedef struct ParsedWord
-{
-	char* chars;
-	int len;
-	int numOfUndecipheredLetters;
-} PARSED_WORD;
 
 void initLetters(LETTER* letter)
 {
@@ -190,14 +200,56 @@ int cmpBySymbolAsc(const void *a, const void *b)
 	return 0;
 }
 
+void handleWord(WORDS_INFO* wordsInfo, char* text)
+{
+	char* sav = text;
+	WORD_LIST_ITEM* newWord = (WORD_LIST_ITEM*)malloc(sizeof(WORD_LIST_ITEM));
+	newWord->len = 0;
+	newWord->numOfUndecipheredLetters = 0; 
+	while (isLetter(*text))
+	{
+		newWord->len++;
+		text++;
+	}
+	newWord->chars = (char*)malloc(newWord->len * sizeof(char) + 1);
+	
+	text = sav;
+	while (isLetter(*text))
+	{
+		newWord->chars = *text;
+		text++;
+		newWord->chars++;
+	}
+	newWord->chars = '\0';
+	if (wordIsUnique(newWord, wordsInfo)) addNewWordToList(); //TODO: написать эти функции
+}
+
+WORDS_INFO* parseTextIntoWords(char* text) //TODO доделать
+{
+	char* sav = text;
+	WORDS_INFO* wordsInfo = (WORDS_INFO*)malloc(sizeof(WORDS_INFO));
+	wordsInfo->firstWord = (WORD_LIST_ITEM*)malloc(sizeof(WORD_LIST_ITEM));
+	wordsInfo->firstWord->chars = NO_LETTERS_IN_WORD;
+	wordsInfo->numOfWords = 0;
+	wordsInfo->maxWordLen = 0;
+	while (*text)
+	{
+		while (!isLetter(*text)) text++;
+		if (isLetter(*text)) handleWord(wordsInfo, text);
+	}
+	text = sav;
+	return wordsInfo;
+}
+
 CRYPTOGRAM* initCryptogram()
 {
-	CRYPTOGRAM* data = malloc(sizeof(char*) + sizeof(LETTER*) + sizeof(int) + sizeof(CHANGES_LIST_ITEM*));
+	CRYPTOGRAM* data = (CRYPTOGRAM*) malloc(sizeof(CRYPTOGRAM));
 	data->text = malloc(sizeof(char));
 	*(data->text) = '\0';
 	data->letter = (LETTER*) calloc(ALPHABET_SIZE, sizeof(LETTER));
 	data->numOfLetters = 0;
 	data->curChange = initChangesList();
+	data->words = parseTextIntoWords(data->text);
 
 	FILE *f = fopen(DATA_PATH, "r");
 	if ((f != NULL) && (fgetc(f) != EOF) && !(feof(f)))
@@ -328,18 +380,17 @@ void analyseFrequencyAndSuggestReplacement(CRYPTOGRAM* data)
 
 void printWordsInOrderByLength(char* text)
 {
-	//WORD* word = parseTextIntoWords(text); //указатель на первое слово
-	//qsort(word, число слов, sizeof(WORD), cmpByFrequencyDesc);
 	//TODO
-	//выделить массив слов (слово содержит символы, свою длину, сколько разных букв капсом), получить наибольшую длину
-	//вывести от наибольшей длины к наименьшей
+	//qsort(word, numberOfWords, sizeof(WORD*), cmpByLenAsc);
+	//вывести все слова
 }
 
 void printWordsInOrderByUndeciphered(char* text)
 {
 	//TODO
-	//выделить массив слов (слово содержит символы, свою длину, сколько разных букв капсом), получить наибольшее количество букв капсом
-	//вывести от наибольшей длины к наименьшей
+	//перессчитать дл€ слов undeciphered символы
+	//qsort(word, numberOfWords, sizeof(WORD*), cmpByUndecipheredAsc);
+	//вывести все слова
 }
 
 void printCryptogram(CRYPTOGRAM* data)
@@ -413,12 +464,18 @@ void handleReplacementMenu(CRYPTOGRAM* data)
 
 void undoCurChange(CRYPTOGRAM* data)
 {
-	
+	(data->letter + data->curChange->originalLetter - 'ј')->replacedTo = NO_REPLACEMENT;
+	CHANGES_LIST_ITEM* oldCurChange = data->curChange;
+	data->curChange = data->curChange->prev;
+	data->curChange->next = oldCurChange;
 }
 
 void redoCurChange(CRYPTOGRAM* data)
 {
-
+	(data->letter + data->curChange->originalLetter - 'ј')->replacedTo = data->curChange->next->replacedTo;
+	CHANGES_LIST_ITEM* oldCurChange = data->curChange;
+	data->curChange = data->curChange->next;
+	data->curChange->prev = oldCurChange;
 }
 
 void handleRevertMenu(CRYPTOGRAM* data)
@@ -428,6 +485,7 @@ void handleRevertMenu(CRYPTOGRAM* data)
 	{
 		system("cls");
 
+		printf("1. ¬ыход в главное меню\n");
 		if (data->curChange->prev == NULL && data->curChange->next == NULL)
 		{
 			printf("»стори€ замен пуста.\n");
@@ -441,7 +499,7 @@ void handleRevertMenu(CRYPTOGRAM* data)
 				data->curChange->next->originalLetter,
 				data->curChange->next->replacedTo);
 		}
-		printf("1. ¬ыход в главное меню\n");
+
 		printf("¬ведите код нужной команды (любой код, кроме перечисленных, будет проигнорирован): ");
 		scanf("%c", &operationCode);
 		switch (operationCode)
