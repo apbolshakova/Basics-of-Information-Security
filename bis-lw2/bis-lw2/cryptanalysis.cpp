@@ -208,7 +208,7 @@ void printMainMenu()
 	printf("3. Вывести слова, сгруппированные по количеству нерасшифрованных букв\n");
 	printf("4. Отобразить криптограмму\n");
 	printf("5. Заменить буквы\n");
-	printf("6. Отменить одну из сделанных замен\n");
+	printf("6. Отменить или вернуть последнее изменение\n");
 	printf("7. Произвести автоматическую замену\n");
 	printf("8. Выход\n");
 	printf("Введите код нужной команды (любой код, кроме перечисленных, будет проигнорирован): ");
@@ -245,24 +245,19 @@ void printEncryptionKey(LETTER* letter)
 	printf("\n");
 }
 
-LETTER* findLetterWithBiggestFrequencyFromUndesiphered(LETTER* letter)
+LETTER* findLetterWithMaxFrequencyFromUndesiphered(LETTER* letter)
 {
-	BOOL exists = FALSE;
-	int index = 0;
-	LETTER* result = LETTER_IS_NOT_FOUND;
-	qsort(letter, ALPHABET_SIZE, sizeof(*letter), cmpByFrequencyDesc); //отсортировать буквы по частотам
-	while (index < ALPHABET_SIZE)
+	LETTER* letterWithMaxFrq = LETTER_IS_NOT_FOUND;
+	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
-		if ((letter + index)->replacedTo == NO_REPLACEMENT) 
+		if ((letter + i)->replacedTo == NO_REPLACEMENT
+			&& (letterWithMaxFrq == LETTER_IS_NOT_FOUND ||
+				letterWithMaxFrq->frequencyInSrcText < (letter + i)->frequencyInSrcText))
 		{
-			exists = TRUE;
-			break;
+			letterWithMaxFrq = letter + i;
 		}
-		else index++;
 	}
-	if (exists) result = letter + index;
-	qsort(letter, ALPHABET_SIZE, sizeof(*letter), cmpBySymbolAsc); //вернуть сортировку по символам
-	return result;
+	return letterWithMaxFrq;
 }
 
 BOOL isUsedAsReplacement(char symbolToCheck, LETTER* letter)
@@ -279,7 +274,7 @@ BOOL isUsedAsReplacement(char symbolToCheck, LETTER* letter)
 	return isUsed;
 }
 
-char findLetterWithBiggestFrequencyFromUnusedAsReplacement(LETTER* letter)
+char findLetterWithMaxFrequencyFromUnusedAsReplacement(LETTER* letter)
 {
 	int index = 0;
 	while (index < ALPHABET_SIZE)
@@ -287,7 +282,8 @@ char findLetterWithBiggestFrequencyFromUnusedAsReplacement(LETTER* letter)
 		if (isUsedAsReplacement(LETTERS_IN_ORDER_BY_FREQUENCY_DESC[index], letter)) index++;
 		else break;
 	}
-	return LETTERS_IN_ORDER_BY_FREQUENCY_DESC[index];
+	if (index == ALPHABET_SIZE) return LETTER_IS_NOT_FOUND;
+    else return LETTERS_IN_ORDER_BY_FREQUENCY_DESC[index];
 }
 
 void printLettersFrequencies(LETTER* letter)
@@ -302,9 +298,9 @@ void printLettersFrequencies(LETTER* letter)
 
 void printReplacementSuggestion(LETTER* letter)
 {
-	LETTER* srcLetter = findLetterWithBiggestFrequencyFromUndesiphered(letter);
+	LETTER* srcLetter = findLetterWithMaxFrequencyFromUndesiphered(letter);
 	//TODO: добавить проверку, не вернулся ли ноль в srcLetter
-	char letterForReplacement = findLetterWithBiggestFrequencyFromUnusedAsReplacement(letter);
+	char letterForReplacement = findLetterWithMaxFrequencyFromUnusedAsReplacement(letter);
 	printf("Исходя из частотного анализа сделан вывод, что букву %c, возможно, следует поменять на %c.\n", srcLetter->symbol, letterForReplacement);
 	//TODO: выводить превью с предположенной заменой
 }
@@ -368,9 +364,10 @@ CHANGES_LIST_ITEM* addChangeToHistory(char srcLetter, char letterForReplacement,
 	newItem->next = NULL;
 	newItem->originalLetter = srcLetter;
 	newItem->replacedTo = letterForReplacement;
+	return newItem;
 }
 
-void replaceLetter(char srcLetter, char letterForReplacement, CRYPTOGRAM* data)
+void replaceLetterAndUpdateHistory(char srcLetter, char letterForReplacement, CRYPTOGRAM* data)
 {
 	(data->letter + srcLetter - 'А')->replacedTo = letterForReplacement;
 	data->curChange = addChangeToHistory(srcLetter, letterForReplacement, data->curChange);
@@ -394,7 +391,7 @@ void handleReplacementMenu(CRYPTOGRAM* data)
 		letterForReplacement = getCyrrilicLetter();
 		if (isCapitalLetter(letterForReplacement)) letterForReplacement += ALPHABET_SIZE;
 	} 
-	replaceLetter(srcLetter, letterForReplacement, data);
+	replaceLetterAndUpdateHistory(srcLetter, letterForReplacement, data);
 
 	system("cls");
 	printf("Замена проведена успешно.\n");
@@ -415,7 +412,7 @@ void handleRevertMenu(CRYPTOGRAM* data)
 	//ещё раз или главное меню
 }
 
-void replaceLettersAutomatically(CRYPTOGRAM* data)
+void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data)
 {
 	float prevUndesipheredLetterFrq = INITIAL_FRQ;
 	float curUndesipheredLetterFrq = INITIAL_FRQ;
@@ -423,18 +420,28 @@ void replaceLettersAutomatically(CRYPTOGRAM* data)
 	do
 	{
 		prevUndesipheredLetterFrq = curUndesipheredLetterFrq;
-		srcLetter = findLetterWithBiggestFrequencyFromUndesiphered(data->letter);
+		srcLetter = findLetterWithMaxFrequencyFromUndesiphered(data->letter);
 		if (srcLetter != LETTER_IS_NOT_FOUND)
 		{
 			curUndesipheredLetterFrq = srcLetter->frequencyInSrcText;
 			if (curUndesipheredLetterFrq != prevUndesipheredLetterFrq)
 			{
-				char letterForReplacement = findLetterWithBiggestFrequencyFromUnusedAsReplacement(data->letter);
-				replaceLetter(srcLetter->symbol, letterForReplacement, data);
+				char letterForReplacement = findLetterWithMaxFrequencyFromUnusedAsReplacement(data->letter); //здесь проверка данных не нужна, т.к. кол-во символов в ключе шифрования одинаковое кол-во
+				replaceLetterAndUpdateHistory(srcLetter->symbol, letterForReplacement, data);
+				printf("Символ %c был заменён на %c.\n", srcLetter->symbol, letterForReplacement);
 			}
 			else break;
 		}
+		else break;
 	} while (srcLetter != LETTER_IS_NOT_FOUND);
+}
+
+void handleAutoreplacement(CRYPTOGRAM* data)
+{
+	system("cls");
+	replaceLettersAndUpdateHistoryAutomatically(data);
+	printf(RETURN_TO_MENU_MESSAGE);
+	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
 void handleMainCycle(CRYPTOGRAM* data)
@@ -453,7 +460,7 @@ void handleMainCycle(CRYPTOGRAM* data)
 		case PRINT_CRYPTOGRAM: printCryptogram(data); break;
 		case REPLACE_LETTERS: handleReplacementMenu(data); break;
 		case REVERT: handleRevertMenu(data); break;
-		case AUTOREPLACEMENT: replaceLettersAutomatically(data); break;
+		case AUTOREPLACEMENT: handleAutoreplacement(data); break;
 		//TODO: функция, выводящая частоты букв исходного текста
 		default: break;
 		}
