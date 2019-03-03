@@ -439,13 +439,17 @@ void analyseFrequencyAndSuggestReplacement(CRYPTOGRAM* data)
 
 void calculateNumOfUndesipheredLetters(CRYPTOGRAM* data)
 {
-	WORD_LIST_ITEM* word = data->words->firstWord;
+	WORD_LIST_ITEM* word = data->words->firstWord; 
 	while (word != NULL)
 	{
 		word->numOfUndecipheredLetters = 0;
-		char* letter = word->chars;
-		while (*letter) if (isCapitalLetter(*letter)) word->numOfUndecipheredLetters++;
-		word->nextWord;
+		char* curLetter = word->chars;
+		while (*curLetter)
+		{
+			if ((data->letter + *curLetter - 'А')->replacedTo == NO_REPLACEMENT) word->numOfUndecipheredLetters++;
+			curLetter++;
+		}
+		word = word->nextWord;
 	}
 }
 
@@ -546,15 +550,28 @@ WORD_LIST_ITEM* sortWordsByUndeciphered(WORD_LIST_ITEM* firstWord)
 	return newfirstWord;
 }
 
-void printWords(WORD_LIST_ITEM* word, PRINTING_OPERATION_CODE order)
+void printCharsWithEncryption(char* ptr, CRYPTOGRAM* data)
+{
+	while (*ptr)
+	{
+		int curSymbolIndex = *(ptr)-'А';
+		if ((data->letter + curSymbolIndex)->replacedTo == NO_REPLACEMENT) printf("%c", *ptr);
+		else printf("%c", (data->letter + curSymbolIndex)->replacedTo);
+		ptr++;
+	}
+	printf("\n");
+}
+
+void printWords(PRINTING_OPERATION_CODE order, CRYPTOGRAM* data)
 {
 	system("cls");
 
+	WORD_LIST_ITEM* word = data->words->firstWord;
 	int prevValue = 0;
 	if (order == BY_LENGTH) prevValue = word->len;
 	if (order == BY_UNDECIPHERED) prevValue = word->numOfUndecipheredLetters;
 	printf("По %i:\n", prevValue);
-	printf("%s\n", word->chars);
+	printCharsWithEncryption(word->chars, data);
 
 	word = word->nextWord;
 	while (word != NULL)
@@ -564,7 +581,7 @@ void printWords(WORD_LIST_ITEM* word, PRINTING_OPERATION_CODE order)
 		if (order == BY_UNDECIPHERED) nextValue = word->numOfUndecipheredLetters;
 
 		if (nextValue != prevValue) printf("\nПо %i:\n", nextValue);
-		printf("%s\n", word->chars);
+		printCharsWithEncryption(word->chars, data);
 
 		word = word->nextWord;
 		prevValue = nextValue;
@@ -587,9 +604,11 @@ void handleWordsPrintingMenu(CRYPTOGRAM* data)
 		scanf("%c", &operationCode);
 		switch (operationCode)
 		{
-		case BY_LENGTH: printWords(sortWordsByLen(data->words->firstWord), BY_LENGTH); break; //длина слов фиксирована => поссчитали на инициализации
+		case BY_LENGTH: data->words->firstWord = sortWordsByLen(data->words->firstWord);
+			            printWords(BY_LENGTH, data); break; //длина слов фиксирована => поссчитали на инициализации
 		case BY_UNDECIPHERED: calculateNumOfUndesipheredLetters(data);
-			                  printWords(sortWordsByUndeciphered(data->words->firstWord), BY_UNDECIPHERED); 
+			                  data->words->firstWord = sortWordsByUndeciphered(data->words->firstWord);
+			                  printWords(BY_UNDECIPHERED, data); 
 							  break;
 		default: break;
 		}
