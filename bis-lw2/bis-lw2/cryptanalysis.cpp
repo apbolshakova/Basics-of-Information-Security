@@ -64,8 +64,9 @@ typedef struct wordListItem
 
 typedef struct wordsInfo
 {
+	WORD_LIST_ITEM* firstWord;
 	WORD_LIST_ITEM* lastWord;
-	int maxWordLen;
+	int numberOfWords;
 } WORDS_INFO;
 
 typedef struct Cryptogram
@@ -156,7 +157,7 @@ void handleDataFromNewString(CRYPTOGRAM* data, char* str)
 	int sizeOfOldText = moveTextPtrToTheEndAndGetSizeOfText(data->text);
 
 	data->text = sav;
-	data->text = (char*) realloc(data->text, (sizeOfOldText + SIZE_OF_STRING_TO_COPY) * sizeof(char));
+	data->text = (char*) realloc(data->text, (sizeOfOldText + SIZE_OF_STRING_TO_COPY) * sizeof(char) + 1);
 	sav = data->text;
 
 	data->text += sizeOfOldText;
@@ -229,16 +230,21 @@ BOOL wordIsUnique(WORD_LIST_ITEM* newWord, WORDS_INFO* wordsInfo)
 	return isUnique;
 }
 
-void addNewWordToList(WORD_LIST_ITEM* newWord, WORD_LIST_ITEM* lastWord)
+void addNewWordToList(WORD_LIST_ITEM* newWord, WORDS_INFO* wordsInfo)
 {
-	WORD_LIST_ITEM* oldLastWord = lastWord;
-	lastWord = newWord;
-	lastWord->prevWord = oldLastWord;
+	WORD_LIST_ITEM* oldLastWord = wordsInfo->lastWord;
+	wordsInfo->lastWord = newWord;
+	if (oldLastWord == NULL) //первый элемент в списке
+	{
+		wordsInfo->lastWord->prevWord = NULL;
+		wordsInfo->firstWord = newWord;
+	}
+	else wordsInfo->lastWord->prevWord = oldLastWord;
 }
 
-void handleWord(WORDS_INFO* wordsInfo, char* text) //TODO: рефакторинг
+char* handleWordAndMovePtrToTheEndOfIt(WORDS_INFO* wordsInfo, char* text) //TODO: рефакторинг
 {
-	char* sav = text;
+	char* textSav = text;
 	WORD_LIST_ITEM* newWord = (WORD_LIST_ITEM*)malloc(sizeof(WORD_LIST_ITEM));
 	newWord->len = 0;
 	newWord->numOfUndecipheredLetters = 0; 
@@ -249,34 +255,43 @@ void handleWord(WORDS_INFO* wordsInfo, char* text) //TODO: рефакторинг
 	}
 	newWord->chars = (char*)malloc(newWord->len * sizeof(char) + 1);
 	
-	text = sav;
+	text = textSav;
+	char* charsSav = newWord->chars;
 	while (isLetter(*text))
 	{
-		newWord->chars = *text;
+		*(newWord->chars) = *text;
 		text++;
 		newWord->chars++;
 	}
-	newWord->chars = '\0';
+	*(newWord->chars) = '\0';
+	newWord->chars = charsSav;
 	if (wordIsUnique(newWord, wordsInfo))
 	{
-		if (wordsInfo->maxWordLen == 0 || newWord->len > wordsInfo->lastWord->len) 
-		    wordsInfo->maxWordLen = newWord->len;
-		addNewWordToList(newWord, wordsInfo->lastWord); //TODO: написать эти функции
-	} 
+		//if (wordsInfo->maxWordLen == 0 || newWord->len > wordsInfo->lastWord->len) TODO: удалить
+		//    wordsInfo->maxWordLen = newWord->len;
+		wordsInfo->numberOfWords++;
+		addNewWordToList(newWord, wordsInfo);
+	}
+	return text;
 }
 
 WORDS_INFO* parseTextIntoWords(char* text) //TODO доделать
 {
 	char* sav = text;
 	WORDS_INFO* wordsInfo = (WORDS_INFO*)malloc(sizeof(WORDS_INFO));
-	wordsInfo->lastWord = (WORD_LIST_ITEM*)malloc(sizeof(WORD_LIST_ITEM));
-	wordsInfo->lastWord->chars = NO_LETTERS_IN_WORD;
-	wordsInfo->lastWord->prevWord = NULL;
-	wordsInfo->maxWordLen = 0;
+	wordsInfo->numberOfWords = 0;
+
+	//wordsInfo->firstWord = (WORD_LIST_ITEM*)malloc(sizeof(WORD_LIST_ITEM));
+	/*wordsInfo->firstWord->chars = NO_LETTERS_IN_WORD;
+	wordsInfo->firstWord->len = 0;
+	wordsInfo->firstWord->numOfUndecipheredLetters = 0;
+	wordsInfo->firstWord->prevWord = NULL; TODO: удалить*/
+	wordsInfo->firstWord = NULL;
+	wordsInfo->lastWord = NULL;
 	while (*text)
 	{
-		while (!isLetter(*text)) text++;
-		if (isLetter(*text)) handleWord(wordsInfo, text);
+		while (*text && !isLetter(*text)) text++;
+		if (isLetter(*text)) text = handleWordAndMovePtrToTheEndOfIt(wordsInfo, text);
 	}
 	text = sav;
 	return wordsInfo;
@@ -290,7 +305,6 @@ CRYPTOGRAM* initCryptogram()
 	data->letter = (LETTER*) calloc(ALPHABET_SIZE, sizeof(LETTER));
 	data->numOfLetters = 0;
 	data->curChange = initChangesList();
-	data->words = parseTextIntoWords(data->text);
 
 	FILE *f = fopen(DATA_PATH, "r");
 	if ((f != NULL) && (fgetc(f) != EOF) && !(feof(f)))
@@ -299,7 +313,11 @@ CRYPTOGRAM* initCryptogram()
 		initTextAndCalculateEncounters(data, f);
 	}
 	fclose(f);
-	if (data->numOfLetters != NO_LETTERS_IN_TEXT) calculateFrequencies(data);
+	if (data->numOfLetters != NO_LETTERS_IN_TEXT)
+	{
+		calculateFrequencies(data);
+		data->words = parseTextIntoWords(data->text);
+	}
 	return data;
 }
 
@@ -419,14 +437,22 @@ void analyseFrequencyAndSuggestReplacement(CRYPTOGRAM* data)
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
-void printWordsInOrderByLength(char* text)
+int cmpByLenAsc(const void *a, const void *b)
 {
-	//TODO
-	//qsort(word, numberOfWords, sizeof(WORD*), cmpByLenAsc);
-	//вывести все слова
+	float aLen = ((WORD_LIST_ITEM*)a)->len;
+	float bLen = ((WORD_LIST_ITEM*)b)->len;
+	if (aLen > bLen) return 1;
+	if (aLen < bLen) return -1;
+	return 0;
 }
 
-void printWordsInOrderByUndeciphered(char* text)
+void printWordsInOrderByLength(CRYPTOGRAM* data)
+{
+	qsort(data->words->firstWord, data->words->numberOfWords, sizeof(WORD_LIST_ITEM*), cmpByLenAsc);
+	
+}
+
+void printWordsInOrderByUndeciphered(CRYPTOGRAM* data)
 {
 	//TODO
 	//перессчитать для слов undeciphered символы
@@ -596,8 +622,8 @@ void handleMainCycle(CRYPTOGRAM* data)
 		switch (operationCode)
 		{
 		case PRINT_ANALYSIS_RESULT_AND_SUGGEST_REPLACEMENT: analyseFrequencyAndSuggestReplacement(data); break;
-		case PRINT_WORDS_BY_LENGTH: printWordsInOrderByLength(data->text); break;
-		case PRINT_WORDS_BY_UNDECIPHERED: printWordsInOrderByUndeciphered(data->text); break;
+		case PRINT_WORDS_BY_LENGTH: printWordsInOrderByLength(data); break;
+		case PRINT_WORDS_BY_UNDECIPHERED: printWordsInOrderByUndeciphered(data); break;
 		case PRINT_CRYPTOGRAM: printCryptogram(data); break;
 		case REPLACE_LETTERS: handleReplacementMenu(data); break;
 		case REVERT: handleRevertMenu(data); break;
