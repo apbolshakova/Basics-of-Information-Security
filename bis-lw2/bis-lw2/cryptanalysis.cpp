@@ -7,6 +7,7 @@
 
 #define SIZE_OF_STRING_TO_COPY 1000
 #define ALPHABET_SIZE 32
+#define NULL_OPERATION 0
 #define NO_REPLACEMENT 0
 #define NO_LETTERS_IN_TEXT 0
 #define NO_LETTERS_IN_WORD 0
@@ -15,18 +16,16 @@
 #define RETURN_TO_MENU_BTN_CODE 32
 #define DATA_PATH "input.txt"
 #define LETTERS_IN_ORDER_BY_FREQUENCY_DESC "оеаинтсрвлкмдпуяыьгзбчйчжшюцщэфъ"
-
-#define SUCESS_INIT_MESSAGE "Исходный текст криптограммы успешно загружен.\n"
 #define RETURN_TO_MENU_MESSAGE "Нажмите пробел, чтобы вернуться в главное меню.\n"
 
 typedef enum OperationCode
 {
-	PRINT_ANALYSIS_RESULT_AND_SUGGEST_REPLACEMENT = '1', //вывод предполагаемой замены в соответстви с частотами распределения букв русского алфавита
+	PRINT_ANALYSIS_RESULT_AND_SUGGEST_REPLACEMENT = '1',
 	PRINT_WORDS,
-	PRINT_CRYPTOGRAM,            //отображение криптограммы с указанием расшифрованного на данный момент текста
-	REPLACE_LETTERS,             //возможность замены букв в криптограмме
-	REVERT,                      //хранение и откат истории замены букв в криптограмме
-	AUTOREPLACEMENT,             //автоматическая замена букв
+	PRINT_CRYPTOGRAM,     
+	REPLACE_LETTERS,
+	REVERT,   
+	AUTOREPLACEMENT, 
 	EXIT 
 } OPERATION_CODE;
 
@@ -40,12 +39,12 @@ typedef enum PrintingOperationCode
 {
 	BY_LENGTH = '1',
 	BY_UNDECIPHERED,
-	EXIT
+	DECLINE_PRINTING
 } PRINTING_OPERATION_CODE;
 
 typedef enum HistoryOperationCode
 {
-	EXIT = '1',
+	DECLINE_REVERT = '1',
 	UNDO,
 	REDO
 } HISTORY_OPERATION_CODE;
@@ -438,70 +437,6 @@ void analyseFrequencyAndSuggestReplacement(CRYPTOGRAM* data)
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
-int cmpByLenAsc(const void *a, const void *b)
-{
-	int aLen = ((WORD_LIST_ITEM*)a)->len;
-	int bLen = ((WORD_LIST_ITEM*)b)->len;
-	if (aLen > bLen) return 1;
-	if (aLen < bLen) return -1;
-	return 0;
-}
-
-void insertByLen(WORD_LIST_ITEM* newFirstWord, WORD_LIST_ITEM* item)
-{
-	if (newFirstWord == NULL || item->numOfUndecipheredLetters < newFirstWord->numOfUndecipheredLetters)
-	{
-		item->nextWord = newFirstWord;
-		newFirstWord = item;
-	}
-	else
-	{
-		WORD_LIST_ITEM* current = newFirstWord;
-		while (current->nextWord != NULL && !(item->numOfUndecipheredLetters < current->nextWord->numOfUndecipheredLetters))
-		{
-			current = current->nextWord;
-		}
-		item->nextWord = current->nextWord;
-		current->nextWord = item;
-	}
-}
-
-void insertByUndeciphered(WORD_LIST_ITEM* newFirstWord, WORD_LIST_ITEM* item)
-{
-	if (newFirstWord == NULL || item->len < newFirstWord->len)
-	{
-		item->nextWord = newFirstWord;
-		newFirstWord = item;
-	}
-	else
-	{
-		WORD_LIST_ITEM* current = newFirstWord;
-		while (current->nextWord != NULL && !(item->len < current->nextWord->len))
-		{
-			current = current->nextWord;
-		}
-		item->nextWord = current->nextWord;
-		current->nextWord = item;
-	}
-}
-
-WORD_LIST_ITEM* sortWords(WORD_LIST_ITEM* firstWord, PRINTING_OPERATION_CODE order)
-{
-	WORD_LIST_ITEM* newFirstWord = NULL;
-	while (firstWord != NULL)
-	{
-		WORD_LIST_ITEM* item = firstWord;
-		firstWord = firstWord->nextWord;
-		switch (order)
-		{
-		case BY_LENGTH: insertByLen(newFirstWord, item); break;
-		case BY_UNDECIPHERED: insertByUndeciphered(newFirstWord, item); break;
-		default: break;
-		}
-	}
-	return newFirstWord;
-}
-
 void calculateNumOfUndesipheredLetters(CRYPTOGRAM* data)
 {
 	WORD_LIST_ITEM* word = data->words->firstWord;
@@ -514,9 +449,134 @@ void calculateNumOfUndesipheredLetters(CRYPTOGRAM* data)
 	}
 }
 
+void insertByLen(WORD_LIST_ITEM** newFirstWord, WORD_LIST_ITEM** itemToInsert)
+{
+	if (*newFirstWord == NULL || (*itemToInsert)->numOfUndecipheredLetters < (*newFirstWord)->numOfUndecipheredLetters)
+	{
+		(*itemToInsert)->nextWord = *newFirstWord;
+		*newFirstWord = *itemToInsert;
+	}
+	else
+	{
+		WORD_LIST_ITEM** currentToCompareWith = *newFirstWord;
+		while (currentToCompareWith != NULL && 
+			   !((*itemToInsert)->numOfUndecipheredLetters < (*currentToCompareWith)->numOfUndecipheredLetters)) //если нарушится - пихаем в следующий
+		{
+			*currentToCompareWith = (*currentToCompareWith)->nextWord;
+		}
+		(*itemToInsert)->nextWord = (*currentToCompareWith)->nextWord;
+		(*currentToCompareWith)->nextWord = *itemToInsert;
+	}
+}
+
+void insertByUndeciphered(WORD_LIST_ITEM** newFirstWord, WORD_LIST_ITEM* item)
+{
+	if (*newFirstWord == NULL || item->len < (*newFirstWord)->len)
+	{
+		item->nextWord = *newFirstWord;
+		*newFirstWord = item;
+	}
+	else
+	{
+		WORD_LIST_ITEM* current = *newFirstWord;
+		while (current->nextWord != NULL && !(item->len < current->nextWord->len))
+		{
+			current = current->nextWord;
+		}
+		item->nextWord = current->nextWord;
+		current->nextWord = item;
+	}
+}
+
+WORD_LIST_ITEM* sortWordsByLen(WORD_LIST_ITEM* firstWord)
+{
+	WORD_LIST_ITEM* newfirstWord = NULL;
+
+	while (firstWord != NULL)
+	{
+		WORD_LIST_ITEM* item = firstWord;
+		firstWord = firstWord->nextWord;
+
+		if (newfirstWord == NULL || item->len < newfirstWord->len)
+		{
+			item->nextWord = newfirstWord;
+			newfirstWord = item;
+		}
+		else
+		{
+			WORD_LIST_ITEM* current = newfirstWord;
+			while (current->nextWord != NULL && !(item->len < current->nextWord->len))
+			{
+				current = current->nextWord;
+			}
+
+			item->nextWord = current->nextWord;
+			current->nextWord = item;
+		}
+	}
+	return newfirstWord;
+}
+
+WORD_LIST_ITEM* sortWordsByUndeciphered(WORD_LIST_ITEM* firstWord)
+{
+	WORD_LIST_ITEM* newfirstWord = NULL;
+
+	while (firstWord != NULL)
+	{
+		WORD_LIST_ITEM* item = firstWord;
+		firstWord = firstWord->nextWord;
+
+		if (newfirstWord == NULL || item->numOfUndecipheredLetters < newfirstWord->numOfUndecipheredLetters)
+		{
+			item->nextWord = newfirstWord;
+			newfirstWord = item;
+		}
+		else
+		{
+			WORD_LIST_ITEM* current = newfirstWord;
+			while (current->nextWord != NULL && !(item->numOfUndecipheredLetters < current->nextWord->numOfUndecipheredLetters))
+			{
+				current = current->nextWord;
+			}
+
+			item->nextWord = current->nextWord;
+			current->nextWord = item;
+		}
+	}
+	return newfirstWord;
+}
+
+void printWords(WORD_LIST_ITEM* word, PRINTING_OPERATION_CODE order)
+{
+	system("cls");
+
+	int prevValue = 0;
+	if (order == BY_LENGTH) prevValue = word->len;
+	if (order == BY_UNDECIPHERED) prevValue = word->numOfUndecipheredLetters;
+	printf("По %i:\n", prevValue);
+	printf("%s\n", word->chars);
+
+	word = word->nextWord;
+	while (word != NULL)
+	{
+		int nextValue = 0;
+		if (order == BY_LENGTH) nextValue = word->len;
+		if (order == BY_UNDECIPHERED) nextValue = word->numOfUndecipheredLetters;
+
+		if (nextValue != prevValue) printf("\nПо %i:\n", nextValue);
+		printf("%s\n", word->chars);
+
+		word = word->nextWord;
+		prevValue = nextValue;
+	}
+
+	printf(RETURN_TO_MENU_MESSAGE);
+	while (_getch() != RETURN_TO_MENU_BTN_CODE);
+}
+
 void handleWordsPrintingMenu(CRYPTOGRAM* data)
 {
-	PRINTING_OPERATION_CODE operationCode = NULL;
+	PRINTING_OPERATION_CODE operationCode = NULL_OPERATION;
 	do
 	{
 		system("cls");
@@ -527,16 +587,13 @@ void handleWordsPrintingMenu(CRYPTOGRAM* data)
 		scanf("%c", &operationCode);
 		switch (operationCode)
 		{
-		case BY_LENGTH: printWords(sortWords(data->words->firstWord, BY_LENGTH)); break; //длина слов фиксирована => поссчитали на инициализации
+		case BY_LENGTH: printWords(sortWordsByLen(data->words->firstWord), BY_LENGTH); break; //длина слов фиксирована => поссчитали на инициализации
 		case BY_UNDECIPHERED: calculateNumOfUndesipheredLetters(data);
-			                  printWords(sortWords(data->words->firstWord, BY_UNDECIPHERED)); 
+			                  printWords(sortWordsByUndeciphered(data->words->firstWord), BY_UNDECIPHERED); 
 							  break;
 		default: break;
 		}
-	} while (operationCode != EXIT);
-
-	printf(RETURN_TO_MENU_MESSAGE);
-	while (_getch() != RETURN_TO_MENU_BTN_CODE);
+	} while (operationCode != DECLINE_PRINTING);
 }
 
 
@@ -627,8 +684,7 @@ void redoCurChange(CRYPTOGRAM* data)
 
 void handleRevertMenu(CRYPTOGRAM* data)
 {
-	HISTORY_OPERATION_CODE operationCode = NULL; 
-	do
+	HISTORY_OPERATION_CODE operationCode = NULL_OPERATION;
 	{
 		system("cls");
 
@@ -655,7 +711,7 @@ void handleRevertMenu(CRYPTOGRAM* data)
 		case REDO: if (data->curChange->next != NULL) redoCurChange(data); break;
 		default: break;
 		}
-	} while (operationCode != '1');
+	} while (operationCode != DECLINE_REVERT);
 }
 
 void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data)
@@ -672,7 +728,8 @@ void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data)
 			curUndesipheredLetterFrq = srcLetter->frequencyInSrcText;
 			if (curUndesipheredLetterFrq != prevUndesipheredLetterFrq)
 			{
-				char letterForReplacement = findLetterWithMaxFrequencyFromUnusedAsReplacement(data->letter); //здесь проверка данных не нужна, т.к. кол-во символов в ключе шифрования одинаковое кол-во
+				//здесь проверка данных не нужна, т.к. кол-во символов в ключе шифрования одинаковое кол-во
+				char letterForReplacement = findLetterWithMaxFrequencyFromUnusedAsReplacement(data->letter);
 				replaceLetter(srcLetter->symbol, letterForReplacement, data);
 				addNewElementToHistory(srcLetter->symbol, letterForReplacement, data);
 				printf("Символ %c был заменён на %c.\n", srcLetter->symbol, letterForReplacement);
@@ -693,7 +750,7 @@ void handleAutoreplacement(CRYPTOGRAM* data)
 
 void handleMainCycle(CRYPTOGRAM* data)
 {
-	OPERATION_CODE operationCode = NULL;
+	OPERATION_CODE operationCode = NULL_OPERATION;
 	do 
 	{
 		system("cls");
