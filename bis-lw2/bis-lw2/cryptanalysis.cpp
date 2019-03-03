@@ -1,9 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
-#include <stdlib.h>
 #include <locale.h>
-#include <conio.h>
-#include <ctype.h>
 
 #define SIZE_OF_STRING_TO_COPY 1000
 #define ALPHABET_SIZE 32
@@ -127,7 +124,8 @@ BOOL isLetter(char item)
 	else return FALSE;
 }
 
-char fixCodeForCyrillicCharFromInput(char item) //исправление считанных кодов символов, сдвиги найдены экспериментально
+//исправление считанных кодов символов, сдвиги найдены экспериментально
+char fixCodeForCyrillicCharFromInput(char item) 
 {
 	if (-128 <= item && item <= -81) return item + 64;
 	if (-32 <= item && item <= -17) return item + 16;
@@ -167,7 +165,8 @@ void handleDataFromNewString(CRYPTOGRAM* data, char* str)
 	int sizeOfOldText = moveTextPtrToTheEndAndGetSizeOfText(data->text);
 
 	data->text = sav;
-	data->text = (char*) realloc(data->text, (sizeOfOldText + SIZE_OF_STRING_TO_COPY) * sizeof(char) + 1);
+	data->text = (char*) realloc(data->text, 
+		                         (sizeOfOldText + SIZE_OF_STRING_TO_COPY) * sizeof(char) + 1);
 	sav = data->text;
 
 	data->text += sizeOfOldText;
@@ -180,7 +179,8 @@ void initTextAndCalculateEncounters(CRYPTOGRAM* data, FILE* f)
 	fclose(f);
 	f = fopen(DATA_PATH, "r");
 	char* temp = (char*) calloc(SIZE_OF_STRING_TO_COPY, sizeof(char));
-	while (fgets(temp, SIZE_OF_STRING_TO_COPY * sizeof(char), f) != NULL) handleDataFromNewString(data, temp);
+	while (fgets(temp, SIZE_OF_STRING_TO_COPY * sizeof(char), f) != NULL) 
+		handleDataFromNewString(data, temp);
 	free(temp);
 }
 
@@ -188,7 +188,8 @@ void calculateFrequencies(CRYPTOGRAM* data)
 {
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
-		(data->letter + i)->frequencyInSrcText = (float) (data->letter + i)->encounteredInSrcText / data->numOfLetters;
+		(data->letter + i)->frequencyInSrcText = 
+			(float) (data->letter + i)->encounteredInSrcText / data->numOfLetters;
 	}
 }
 
@@ -323,7 +324,8 @@ CRYPTOGRAM* initCryptogram()
 
 void printMainMenu()
 {
-	printf("Вас приветствует программа, реализующая функции инструмента криптоаналитика. Возможные действия:\n");
+	printf("Вас приветствует программа, реализующая функции инструмента криптоаналитика.");
+	printf("Возможные действия: \n");
 	printf("1. Предложить замену на основе частотного анализа\n");
 	printf("2. Вывести слова из криптограммы\n");
 	printf("3. Отобразить криптограмму\n");
@@ -331,7 +333,8 @@ void printMainMenu()
 	printf("5. Отменить или вернуть последнее изменение\n");
 	printf("6. Произвести автоматическую замену\n");
 	printf("7. Выход\n");
-	printf("Введите код нужной команды (любой код, кроме перечисленных, будет проигнорирован): ");
+	printf("Введите код нужной команды " );
+	printf("(любой код, кроме перечисленных, будет проигнорирован): ");
 }
 
 void printText(CRYPTOGRAM* data)
@@ -343,7 +346,8 @@ void printText(CRYPTOGRAM* data)
 		if (isLetter(*ptr))
 		{
 			int curSymbolIndex = *(ptr)-'А';
-			if ((data->letter + curSymbolIndex)->replacedTo == NO_REPLACEMENT) printf("%c", *ptr);
+			if ((data->letter + curSymbolIndex)->replacedTo == NO_REPLACEMENT) 
+				printf("%c", *ptr);
 			else printf("%c", (data->letter + curSymbolIndex)->replacedTo);
 		}
 		else printf("%c", *ptr);
@@ -419,14 +423,15 @@ void printLettersFrequencies(LETTER* letter)
 void printReplacementSuggestion(LETTER* letter)
 {
 	LETTER* srcLetter = findLetterWithMaxFrequencyFromUndesiphered(letter);
-	if (srcLetter == LETTER_IS_NOT_FOUND) printf("Невозможно определить оптимальную замену.\n");
+	if (srcLetter == LETTER_IS_NOT_FOUND) 
+		printf("Невозможно определить оптимальную замену.\n");
 	else
 	{
 		char letterForReplacement = findLetterWithMaxFrequencyFromUnusedAsReplacement(letter);
-		printf("Исходя из частотного анализа сделан вывод, что букву %c, возможно, следует поменять на %c.\n",
+		printf("Исходя из частотного анализа сделан вывод, ");
+		printf("что букву %c, возможно, следует поменять на %c.\n", 
 			srcLetter->symbol, letterForReplacement);
 	}
-
 }
 
 void analyseFrequencyAndSuggestReplacement(CRYPTOGRAM* data)
@@ -449,7 +454,8 @@ void calculateNumOfUndesipheredLetters(CRYPTOGRAM* data)
 		char* curLetter = word->chars;
 		while (*curLetter)
 		{
-			if ((data->letter + *curLetter - 'А')->replacedTo == NO_REPLACEMENT) word->numOfUndecipheredLetters++;
+			if ((data->letter + *curLetter - 'А')->replacedTo == NO_REPLACEMENT) 
+				word->numOfUndecipheredLetters++;
 			curLetter++;
 		}
 		word = word->nextWord;
@@ -458,7 +464,8 @@ void calculateNumOfUndesipheredLetters(CRYPTOGRAM* data)
 
 void insertByLen(WORD_LIST_ITEM** newFirstWord, WORD_LIST_ITEM** itemToInsert)
 {
-	if (*newFirstWord == NULL || (*itemToInsert)->numOfUndecipheredLetters < (*newFirstWord)->numOfUndecipheredLetters)
+	if (*newFirstWord == NULL || 
+		(*itemToInsert)->numOfUndecipheredLetters < (*newFirstWord)->numOfUndecipheredLetters)
 	{
 		(*itemToInsert)->nextWord = *newFirstWord;
 		*newFirstWord = *itemToInsert;
@@ -467,7 +474,8 @@ void insertByLen(WORD_LIST_ITEM** newFirstWord, WORD_LIST_ITEM** itemToInsert)
 	{
 		WORD_LIST_ITEM** currentToCompareWith = *newFirstWord;
 		while (currentToCompareWith != NULL && 
-			   !((*itemToInsert)->numOfUndecipheredLetters < (*currentToCompareWith)->numOfUndecipheredLetters)) //если нарушится - пихаем в следующий
+			      !((*itemToInsert)->numOfUndecipheredLetters < 
+			      (*currentToCompareWith)->numOfUndecipheredLetters))
 		{
 			*currentToCompareWith = (*currentToCompareWith)->nextWord;
 		}
@@ -533,7 +541,8 @@ WORD_LIST_ITEM* sortWordsByUndeciphered(WORD_LIST_ITEM* firstWord)
 		WORD_LIST_ITEM* item = firstWord;
 		firstWord = firstWord->nextWord;
 
-		if (newfirstWord == NULL || item->numOfUndecipheredLetters < newfirstWord->numOfUndecipheredLetters)
+		if (newfirstWord == NULL || 
+			item->numOfUndecipheredLetters < newfirstWord->numOfUndecipheredLetters)
 		{
 			item->nextWord = newfirstWord;
 			newfirstWord = item;
@@ -541,7 +550,8 @@ WORD_LIST_ITEM* sortWordsByUndeciphered(WORD_LIST_ITEM* firstWord)
 		else
 		{
 			WORD_LIST_ITEM* current = newfirstWord;
-			while (current->nextWord != NULL && !(item->numOfUndecipheredLetters < current->nextWord->numOfUndecipheredLetters))
+			while (current->nextWord != NULL && 
+				item->numOfUndecipheredLetters >= current->nextWord->numOfUndecipheredLetters)
 			{
 				current = current->nextWord;
 			}
@@ -603,12 +613,13 @@ void handleWordsPrintingMenu(CRYPTOGRAM* data)
 		printf("1. Вывести слова, сгрупированные по длине\n");
 		printf("2. Вывести слова, сгрупированные по количеству букв без замен\n");
 		printf("3. Вернуться в главное меню\n");
-		printf("Введите код нужной команды (любой код, кроме перечисленных, будет проигнорирован): ");
+		printf("Введите код нужной команды ");
+		printf("(любой код, кроме перечисленных, будет проигнорирован) : ");
 		scanf("\n%c", &operationCode);
 		switch (operationCode)
 		{
 		case BY_LENGTH: data->words->firstWord = sortWordsByLen(data->words->firstWord);
-			printWords(BY_LENGTH, data); break; //длина слов фиксирована => поссчитали на инициализации
+			printWords(BY_LENGTH, data); break; //длины подсчитаны при инициализации
 		case BY_UNDECIPHERED: calculateNumOfUndesipheredLetters(data);
 			data->words->firstWord = sortWordsByUndeciphered(data->words->firstWord);
 			printWords(BY_UNDECIPHERED, data);
@@ -630,7 +641,7 @@ void printCryptogram(CRYPTOGRAM* data)
 
 char getCyrrilicLetter()
 {
-	char letter = '\n'; //для исправления проблемы с энтером во входном потоке
+	char letter = '\n'; //для исправления проблемы со считанным ENTER во входном потоке
 	while (letter == '\n') scanf("%c", &letter);
 	letter = fixCodeForCyrillicCharFromInput(letter);
 	while (!isLetter(letter))
@@ -643,7 +654,7 @@ char getCyrrilicLetter()
 	return letter;
 }
 
-CHANGES_LIST_ITEM* addNewElementToHistory(char srcLetter, char letterForReplacement, CRYPTOGRAM* data)
+void addNewElementToHistory(char srcLetter, char letterForReplacement, CRYPTOGRAM* data)
 {
 	CHANGES_LIST_ITEM* newItem = (CHANGES_LIST_ITEM*)malloc(sizeof(CHANGES_LIST_ITEM));
 	newItem->prev = data->curChange;
@@ -666,14 +677,15 @@ void handleReplacementMenu(CRYPTOGRAM* data)
 
 	printf("Введите букву, замену которой необходимо провести: ");
 	char srcLetter = getCyrrilicLetter();
-	if (isLowercaseLetter(srcLetter)) srcLetter -= ALPHABET_SIZE; //сдвиг с маленьких букв на большие
+	if (isLowercaseLetter(srcLetter)) srcLetter -= ALPHABET_SIZE; //сдвиг на др. регистр
 	
 	printf("Введите букву, на которую её необходимо заменить: ");
 	char letterForReplacement = getCyrrilicLetter();
 	if (isCapitalLetter(letterForReplacement)) letterForReplacement += ALPHABET_SIZE;
 	while (isUsedAsReplacement(letterForReplacement, data->letter))
 	{
-		printf("Эта буква уже использована в качестве замены. Введите другую букву русского алфавита: ");
+		printf("Эта буква уже использована в качестве замены. ");
+		printf("Введите другую букву русского алфавита : ");
 		letterForReplacement = getCyrrilicLetter();
 		if (isCapitalLetter(letterForReplacement)) letterForReplacement += ALPHABET_SIZE;
 	} 
@@ -697,7 +709,8 @@ void undoCurChange(CRYPTOGRAM* data)
 
 void redoCurChange(CRYPTOGRAM* data)
 {
-	(data->letter + data->curChange->originalLetter - 'А')->replacedTo = data->curChange->next->replacedTo;
+	(data->letter + data->curChange->originalLetter - 'А')->replacedTo = 
+		data->curChange->next->replacedTo;
 	CHANGES_LIST_ITEM* oldCurChange = data->curChange;
 	data->curChange = data->curChange->next;
 	data->curChange->prev = oldCurChange;
@@ -716,15 +729,23 @@ void handleRevertMenu(CRYPTOGRAM* data)
 		}
 		else
 		{
-			if (data->curChange->prev != NULL) printf("2. Отменить последнее действие: замену %c на %c\n",
-				data->curChange->originalLetter,
-				data->curChange->replacedTo);
-			if (data->curChange->next != NULL) printf("3. Восстановить последнее отменённое действие: замену %c на %c\n",
-				data->curChange->next->originalLetter,
-				data->curChange->next->replacedTo);
+			if (data->curChange->prev != NULL)
+			{
+				printf("2. Отменить последнее действие: ");
+				printf("замену %c на %c\n", 
+					   data->curChange->originalLetter, data->curChange->replacedTo);
+			}
+			if (data->curChange->next != NULL)
+			{
+				printf("3. Восстановить последнее отменённое действие: ");
+				printf("замену %c на %c\n",
+					   data->curChange->next->originalLetter,
+					   data->curChange->next->replacedTo);
+			}
 		}
 
-		printf("Введите код нужной команды (любой код, кроме перечисленных, будет проигнорирован): ");
+		printf("Введите код нужной команды ");
+		printf("(любой код, кроме перечисленных, будет проигнорирован): ");
 		scanf("\n%c", &operationCode);
 		switch (operationCode)
 		{
@@ -749,11 +770,13 @@ void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data)
 			curUndesipheredLetterFrq = srcLetter->frequencyInSrcText;
 			if (curUndesipheredLetterFrq != prevUndesipheredLetterFrq)
 			{
-				//здесь проверка данных не нужна, т.к. кол-во символов в ключе шифрования одинаковое кол-во
-				char letterForReplacement = findLetterWithMaxFrequencyFromUnusedAsReplacement(data->letter);
+				//проверка данных не нужна, т.к. кол-во в ключе символов одинаковое
+				char letterForReplacement = 
+					findLetterWithMaxFrequencyFromUnusedAsReplacement(data->letter);
 				replaceLetter(srcLetter->symbol, letterForReplacement, data);
 				addNewElementToHistory(srcLetter->symbol, letterForReplacement, data);
-				printf("Символ %c был заменён на %c.\n", srcLetter->symbol, letterForReplacement);
+				printf("Символ %c был заменён на %c.\n", 
+					srcLetter->symbol, letterForReplacement);
 			}
 			else break;
 		}
@@ -779,7 +802,8 @@ void handleMainCycle(CRYPTOGRAM* data)
 		scanf("%c", &operationCode);
 		switch (operationCode)
 		{
-		case PRINT_ANALYSIS_RESULT_AND_SUGGEST_REPLACEMENT: analyseFrequencyAndSuggestReplacement(data); break;
+		case PRINT_ANALYSIS_RESULT_AND_SUGGEST_REPLACEMENT: 
+			analyseFrequencyAndSuggestReplacement(data); break;
 		case PRINT_WORDS: handleWordsPrintingMenu(data); break;
 		case PRINT_CRYPTOGRAM: printCryptogram(data); break;
 		case REPLACE_LETTERS: handleReplacementMenu(data); break;
