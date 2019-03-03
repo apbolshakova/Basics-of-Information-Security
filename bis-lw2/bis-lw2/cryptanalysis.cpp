@@ -278,7 +278,7 @@ char* handleWordAndMovePtrToTheEndOfIt(WORDS_INFO* wordsInfo, char* text) //TODO
 	return text;
 }
 
-WORDS_INFO* parseTextIntoWords(char* text) //TODO доделать
+WORDS_INFO* parseTextIntoWords(char* text)
 {
 	char* sav = text;
 	WORDS_INFO* wordsInfo = (WORDS_INFO*)malloc(sizeof(WORDS_INFO));
@@ -443,43 +443,41 @@ int cmpByLenAsc(const void *a, const void *b)
 	return 0;
 }
 
-/*WORD_LIST_ITEM* sortWordsByLen(WORD_LIST_ITEM* firstWord)
+WORD_LIST_ITEM* sortWordsByLen(WORD_LIST_ITEM* firstWord)
 {
-	WORD_LIST_ITEM *newFirstWord = NULL;
+	WORD_LIST_ITEM* newfirstWord = NULL;
 
 	while (firstWord != NULL)
 	{
-		WORD_LIST_ITEM* node = firstWord;
-		firstWord = firstWord->next;
+		WORD_LIST_ITEM* item = firstWord;
+		firstWord = firstWord->nextWord;
 
-		if (new_root == NULL || node->data < new_root->data)
+		if (newfirstWord == NULL || item->len < newfirstWord->len)
 		{
-			node->next = new_root;
-			new_root = node;
+			item->nextWord = newfirstWord;
+			newfirstWord = item;
 		}
 		else
 		{
-			struct list *current = new_root;
-			while (current->next != NULL && !(node->data < current->next->data))
+			WORD_LIST_ITEM* current = newfirstWord;
+			while ( current->nextWord != NULL && !( item->len < current->nextWord->len ) )
 			{
-				current = current->next;
+				  current = current->nextWord;
 			}
 
-			node->next = current->next;
-			current->next = node;
+			item->nextWord = current->nextWord;
+			current->nextWord = item;
 		}
 	}
 
-	return new_root;
-}*/
+	return newfirstWord;
+}
 
 void printWordsInOrderByLength(CRYPTOGRAM* data)
 {
-	//!TODO: напечатать исходный список слов
-	WORD_LIST_ITEM* item = data->words->lastWord;
-	//sortWordsByLen(data->words->lastWord);
+	data->words->firstWord = sortWordsByLen(data->words->firstWord);
 	
-	item = data->words->firstWord;
+	WORD_LIST_ITEM* item = data->words->firstWord;
 	while (item != NULL)
 	{
 		printf("—лово:");
