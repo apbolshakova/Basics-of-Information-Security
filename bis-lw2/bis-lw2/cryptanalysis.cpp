@@ -78,7 +78,6 @@ typedef struct wordsInfo
 {
 	WORD_LIST_ITEM* firstWord;
 	WORD_LIST_ITEM* lastWord;
-	int numberOfWords;
 } WORDS_INFO;
 
 typedef struct Cryptogram
@@ -280,13 +279,7 @@ char* handleWordAndMovePtrToTheEndOfIt(WORDS_INFO* wordsInfo, char* text) //TODO
 	}
 	*(newWord->chars) = '\0';
 	newWord->chars = charsSav;
-	if (wordIsUnique(newWord, wordsInfo))
-	{
-		//if (wordsInfo->maxWordLen == 0 || newWord->len > wordsInfo->lastWord->len) TODO: удалить
-		//    wordsInfo->maxWordLen = newWord->len;
-		wordsInfo->numberOfWords++;
-		addNewWordToList(newWord, wordsInfo);
-	}
+	if (wordIsUnique(newWord, wordsInfo)) addNewWordToList(newWord, wordsInfo);
 	return text;
 }
 
@@ -294,7 +287,6 @@ WORDS_INFO* parseTextIntoWords(char* text)
 {
 	char* sav = text;
 	WORDS_INFO* wordsInfo = (WORDS_INFO*)malloc(sizeof(WORDS_INFO));
-	wordsInfo->numberOfWords = 0;
 	wordsInfo->firstWord = NULL;
 	wordsInfo->lastWord = NULL;
 	while (*text)
@@ -430,7 +422,8 @@ void printReplacementSuggestion(LETTER* letter)
 	LETTER* srcLetter = findLetterWithMaxFrequencyFromUndesiphered(letter);
 	//TODO: добавить проверку, не вернулся ли ноль в srcLetter
 	char letterForReplacement = findLetterWithMaxFrequencyFromUnusedAsReplacement(letter);
-	printf("Исходя из частотного анализа сделан вывод, что букву %c, возможно, следует поменять на %c.\n", srcLetter->symbol, letterForReplacement);
+	printf("Исходя из частотного анализа сделан вывод, что букву %c, возможно, следует поменять на %c.\n", 
+		   srcLetter->symbol, letterForReplacement);
 	//TODO: выводить превью с предположенной заменой
 }
 
@@ -456,7 +449,7 @@ int cmpByLenAsc(const void *a, const void *b)
 
 void insertByLen(WORD_LIST_ITEM* newFirstWord, WORD_LIST_ITEM* item)
 {
-	if (newFirstWord == NULL || item->len < newFirstWord->len)
+	if (newFirstWord == NULL || item->numOfUndecipheredLetters < newFirstWord->numOfUndecipheredLetters)
 	{
 		item->nextWord = newFirstWord;
 		newFirstWord = item;
@@ -464,7 +457,7 @@ void insertByLen(WORD_LIST_ITEM* newFirstWord, WORD_LIST_ITEM* item)
 	else
 	{
 		WORD_LIST_ITEM* current = newFirstWord;
-		while (current->nextWord != NULL && !(item->len < current->nextWord->len))
+		while (current->nextWord != NULL && !(item->numOfUndecipheredLetters < current->nextWord->numOfUndecipheredLetters))
 		{
 			current = current->nextWord;
 		}
@@ -507,6 +500,18 @@ WORD_LIST_ITEM* sortWords(WORD_LIST_ITEM* firstWord, PRINTING_OPERATION_CODE ord
 		}
 	}
 	return newFirstWord;
+}
+
+void calculateNumOfUndesipheredLetters(CRYPTOGRAM* data)
+{
+	WORD_LIST_ITEM* word = data->words->firstWord;
+	while (word != NULL)
+	{
+		word->numOfUndecipheredLetters = 0;
+		char* letter = word->chars;
+		while (*letter) if (isCapitalLetter(*letter)) word->numOfUndecipheredLetters++;
+		word->nextWord;
+	}
 }
 
 void handleWordsPrintingMenu(CRYPTOGRAM* data)
