@@ -59,13 +59,12 @@ typedef struct wordListItem
 	char* chars;
 	int len;
 	int numOfUndecipheredLetters;
-	WORD_LIST_ITEM* nextWord;
+	struct wordListItem* prevWord;
 } WORD_LIST_ITEM;
 
 typedef struct wordsInfo
 {
-	WORD_LIST_ITEM* firstWord;
-	int numOfWords;
+	WORD_LIST_ITEM* lastWord;
 	int maxWordLen;
 } WORDS_INFO;
 
@@ -200,7 +199,44 @@ int cmpBySymbolAsc(const void *a, const void *b)
 	return 0;
 }
 
-void handleWord(WORDS_INFO* wordsInfo, char* text)
+BOOL areSameWords(char* a, char* b)
+{
+	BOOL areSame = TRUE;
+	while (*a && *b)
+	{
+		if (*a != *b)
+		{
+			areSame = FALSE;
+			break;
+		}
+		a++;
+		b++;
+	}
+	if (*a || *b) areSame = FALSE; //должны были закончиться одновременно
+	return areSame;
+}
+
+BOOL wordIsUnique(WORD_LIST_ITEM* newWord, WORDS_INFO* wordsInfo)
+{
+	WORD_LIST_ITEM* item = wordsInfo->lastWord;
+	BOOL isUnique = TRUE;
+	while (item != NULL && isUnique)
+	{
+		if (item->len == newWord->len && 
+			areSameWords(item->chars, newWord->chars)) isUnique = FALSE;
+		item = item->prevWord;
+	}
+	return isUnique;
+}
+
+void addNewWordToList(WORD_LIST_ITEM* newWord, WORD_LIST_ITEM* lastWord)
+{
+	WORD_LIST_ITEM* oldLastWord = lastWord;
+	lastWord = newWord;
+	lastWord->prevWord = oldLastWord;
+}
+
+void handleWord(WORDS_INFO* wordsInfo, char* text) //TODO: рефакторинг
 {
 	char* sav = text;
 	WORD_LIST_ITEM* newWord = (WORD_LIST_ITEM*)malloc(sizeof(WORD_LIST_ITEM));
@@ -221,16 +257,21 @@ void handleWord(WORDS_INFO* wordsInfo, char* text)
 		newWord->chars++;
 	}
 	newWord->chars = '\0';
-	if (wordIsUnique(newWord, wordsInfo)) addNewWordToList(); //TODO: написать эти функции
+	if (wordIsUnique(newWord, wordsInfo))
+	{
+		if (wordsInfo->maxWordLen == 0 || newWord->len > wordsInfo->lastWord->len) 
+		    wordsInfo->maxWordLen = newWord->len;
+		addNewWordToList(newWord, wordsInfo->lastWord); //TODO: написать эти функции
+	} 
 }
 
 WORDS_INFO* parseTextIntoWords(char* text) //TODO доделать
 {
 	char* sav = text;
 	WORDS_INFO* wordsInfo = (WORDS_INFO*)malloc(sizeof(WORDS_INFO));
-	wordsInfo->firstWord = (WORD_LIST_ITEM*)malloc(sizeof(WORD_LIST_ITEM));
-	wordsInfo->firstWord->chars = NO_LETTERS_IN_WORD;
-	wordsInfo->numOfWords = 0;
+	wordsInfo->lastWord = (WORD_LIST_ITEM*)malloc(sizeof(WORD_LIST_ITEM));
+	wordsInfo->lastWord->chars = NO_LETTERS_IN_WORD;
+	wordsInfo->lastWord->prevWord = NULL;
 	wordsInfo->maxWordLen = 0;
 	while (*text)
 	{
