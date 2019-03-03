@@ -601,7 +601,7 @@ void handleWordsPrintingMenu(CRYPTOGRAM* data)
 		printf("2. ¬ывести слова, сгрупированные по количеству букв без замен\n");
 		printf("3. ¬ернутьс€ в главное меню\n");
 		printf("¬ведите код нужной команды (любой код, кроме перечисленных, будет проигнорирован): ");
-		scanf("%c", &operationCode);
+		scanf("\n%c", &operationCode);
 		switch (operationCode)
 		{
 		case BY_LENGTH: data->words->firstWord = sortWordsByLen(data->words->firstWord);
@@ -704,6 +704,7 @@ void redoCurChange(CRYPTOGRAM* data)
 void handleRevertMenu(CRYPTOGRAM* data)
 {
 	HISTORY_OPERATION_CODE operationCode = NULL_OPERATION;
+	do
 	{
 		system("cls");
 
@@ -723,7 +724,7 @@ void handleRevertMenu(CRYPTOGRAM* data)
 		}
 
 		printf("¬ведите код нужной команды (любой код, кроме перечисленных, будет проигнорирован): ");
-		scanf("%c", &operationCode);
+		scanf("\n%c", &operationCode);
 		switch (operationCode)
 		{
 		case UNDO: if (data->curChange->prev != NULL) undoCurChange(data); break;
