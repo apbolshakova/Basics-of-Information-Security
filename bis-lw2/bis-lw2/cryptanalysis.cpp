@@ -639,14 +639,14 @@ void printCryptogram(CRYPTOGRAM* data)
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
-char getCyrrilicLetter()
+char getCyrrilicLetterOrExitSymbol()
 {
 	char letter = '\n'; //для исправления проблемы со считанным ENTER во входном потоке
 	while (letter == '\n') scanf("%c", &letter);
 	letter = fixCodeForCyrillicCharFromInput(letter);
-	while (!isLetter(letter))
+	while (letter != RETURN_TO_MENU_BTN_CODE && !isLetter(letter))
 	{
-		printf("Недопустимый символ. Введите букву русского алфавита: ");
+		printf("Недопустимый символ. Введите букву русского алфавита или пробел для выхода в главное меню: ");
 		scanf("%c", &letter);
 		while (letter == '\n') scanf("%c", &letter);
 		letter = fixCodeForCyrillicCharFromInput(letter);
@@ -675,18 +675,21 @@ void handleReplacementMenu(CRYPTOGRAM* data)
 	system("cls");
 	printEncryptionKey(data->letter);
 
-	printf("Введите букву, замену которой необходимо провести: ");
-	char srcLetter = getCyrrilicLetter();
+	printf("Введите букву, замену которой необходимо провести или пробел для выхода в главное меню: ");
+	char srcLetter = getCyrrilicLetterOrExitSymbol();
+	if (srcLetter == RETURN_TO_MENU_BTN_CODE) return;
 	if (isLowercaseLetter(srcLetter)) srcLetter -= ALPHABET_SIZE; //сдвиг на др. регистр
 	
-	printf("Введите букву, на которую её необходимо заменить: ");
-	char letterForReplacement = getCyrrilicLetter();
+	printf("Введите букву, на которую её необходимо заменить или пробел для выхода в главное меню: ");
+	char letterForReplacement = getCyrrilicLetterOrExitSymbol();
+	if (letterForReplacement == RETURN_TO_MENU_BTN_CODE) return;
 	if (isCapitalLetter(letterForReplacement)) letterForReplacement += ALPHABET_SIZE;
 	while (isUsedAsReplacement(letterForReplacement, data->letter))
 	{
 		printf("Эта буква уже использована в качестве замены. ");
-		printf("Введите другую букву русского алфавита : ");
-		letterForReplacement = getCyrrilicLetter();
+		printf("Введите другую букву русского алфавита или введите пробел для выхода в главное меню: ");
+		letterForReplacement = getCyrrilicLetterOrExitSymbol();
+		if (letterForReplacement == RETURN_TO_MENU_BTN_CODE) return;
 		if (isCapitalLetter(letterForReplacement)) letterForReplacement += ALPHABET_SIZE;
 	} 
 	replaceLetter(srcLetter, letterForReplacement, data);
@@ -826,7 +829,7 @@ int main(void)
 	}
 	else handleMainCycle(data);
 
-	CHANGES_LIST_ITEM* changesItem = data->curChange;
+	/*CHANGES_LIST_ITEM* changesItem = data->curChange;
 	if (changesItem->prev == NULL && changesItem->next == NULL)
 	{
 		data->curChange = NULL;
@@ -840,7 +843,7 @@ int main(void)
 			if (changesItem != NULL) changesItem->prev = NULL;
 			free(data->curChange->root);
 		}
-	}
+	}*/
 
 	/* TODO: заставить работать
 	WORD_LIST_ITEM* wordsItem = data->words->firstWord;
