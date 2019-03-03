@@ -8,15 +8,13 @@
 #define SIZE_OF_STRING_TO_COPY 1000
 #define ALPHABET_SIZE 32
 #define NULL_OPERATION 0
-#define NO_REPLACEMENT 0
-#define NO_LETTERS_IN_TEXT 0
-#define NO_LETTERS_IN_WORD 0
+#define NO_REPLACEMENT '\0'
+#define NO_LETTERS '\0'
 #define LETTER_IS_NOT_FOUND 0
 #define INITIAL_FRQ 0.0
 #define RETURN_TO_MENU_BTN_CODE 32
 #define DATA_PATH "input.txt"
 #define LETTERS_IN_ORDER_BY_FREQUENCY_DESC "оеаинтсрвлкмдпуяыьгзбчйчжшюцщэфъ"
-#define RETURN_TO_MENU_MESSAGE "Нажмите пробел, чтобы вернуться в главное меню.\n"
 
 typedef enum OperationCode
 {
@@ -59,6 +57,7 @@ typedef struct Letter
 
 typedef struct ChangesListItem
 {
+	struct ChangesListItem* root;
 	struct ChangesListItem* prev;
 	struct ChangesListItem* next;
 	char originalLetter;
@@ -101,7 +100,8 @@ void initLetters(LETTER* letter)
 
 CHANGES_LIST_ITEM* initChangesList()
 {
-	CHANGES_LIST_ITEM* initialItem = (CHANGES_LIST_ITEM*)malloc(2 * sizeof(CHANGES_LIST_ITEM*) + 2 * sizeof(char));
+	CHANGES_LIST_ITEM* initialItem = (CHANGES_LIST_ITEM*)malloc(sizeof(CHANGES_LIST_ITEM));
+	initialItem->root = initialItem;
 	initialItem->prev = NULL;
 	initialItem->next = NULL;
 	initialItem->originalLetter = NO_REPLACEMENT;
@@ -313,7 +313,7 @@ CRYPTOGRAM* initCryptogram()
 		initTextAndCalculateEncounters(data, f);
 	}
 	fclose(f);
-	if (data->numOfLetters != NO_LETTERS_IN_TEXT)
+	if (data->numOfLetters != NO_LETTERS)
 	{
 		calculateFrequencies(data);
 		data->words = parseTextIntoWords(data->text);
@@ -419,11 +419,14 @@ void printLettersFrequencies(LETTER* letter)
 void printReplacementSuggestion(LETTER* letter)
 {
 	LETTER* srcLetter = findLetterWithMaxFrequencyFromUndesiphered(letter);
-	//TODO: добавить проверку, не вернулся ли ноль в srcLetter
-	char letterForReplacement = findLetterWithMaxFrequencyFromUnusedAsReplacement(letter);
-	printf("Исходя из частотного анализа сделан вывод, что букву %c, возможно, следует поменять на %c.\n", 
-		   srcLetter->symbol, letterForReplacement);
-	//TODO: выводить превью с предположенной заменой
+	if (srcLetter == LETTER_IS_NOT_FOUND) printf("Невозможно определить оптимальную замену.\n");
+	else
+	{
+		char letterForReplacement = findLetterWithMaxFrequencyFromUnusedAsReplacement(letter);
+		printf("Исходя из частотного анализа сделан вывод, что букву %c, возможно, следует поменять на %c.\n",
+			srcLetter->symbol, letterForReplacement);
+	}
+
 }
 
 void analyseFrequencyAndSuggestReplacement(CRYPTOGRAM* data)
@@ -433,7 +436,7 @@ void analyseFrequencyAndSuggestReplacement(CRYPTOGRAM* data)
 	printLettersFrequencies(data->letter);
 	printReplacementSuggestion(data->letter);
 
-	printf(RETURN_TO_MENU_MESSAGE);
+	printf("Нажмите пробел, чтобы вернуться в главное меню.\n");
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
@@ -587,7 +590,7 @@ void printWords(PRINTING_OPERATION_CODE order, CRYPTOGRAM* data)
 		prevValue = nextValue;
 	}
 
-	printf(RETURN_TO_MENU_MESSAGE);
+	printf("Нажмите пробел, чтобы вернуться в главное меню.\n");
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
@@ -605,16 +608,15 @@ void handleWordsPrintingMenu(CRYPTOGRAM* data)
 		switch (operationCode)
 		{
 		case BY_LENGTH: data->words->firstWord = sortWordsByLen(data->words->firstWord);
-			            printWords(BY_LENGTH, data); break; //длина слов фиксирована => поссчитали на инициализации
+			printWords(BY_LENGTH, data); break; //длина слов фиксирована => поссчитали на инициализации
 		case BY_UNDECIPHERED: calculateNumOfUndesipheredLetters(data);
-			                  data->words->firstWord = sortWordsByUndeciphered(data->words->firstWord);
-			                  printWords(BY_UNDECIPHERED, data); 
-							  break;
+			data->words->firstWord = sortWordsByUndeciphered(data->words->firstWord);
+			printWords(BY_UNDECIPHERED, data);
+			break;
 		default: break;
 		}
 	} while (operationCode != DECLINE_PRINTING);
 }
-
 
 void printCryptogram(CRYPTOGRAM* data)
 {
@@ -622,7 +624,7 @@ void printCryptogram(CRYPTOGRAM* data)
 	printEncryptionKey(data->letter);
 	printText(data);
 
-	printf(RETURN_TO_MENU_MESSAGE);
+	printf("Нажмите пробел, чтобы вернуться в главное меню.\n");
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
@@ -643,9 +645,10 @@ char getCyrrilicLetter()
 
 CHANGES_LIST_ITEM* addNewElementToHistory(char srcLetter, char letterForReplacement, CRYPTOGRAM* data)
 {
-	CHANGES_LIST_ITEM* newItem = (CHANGES_LIST_ITEM*)malloc(2 * sizeof(CHANGES_LIST_ITEM*) + 2 * sizeof(char));
+	CHANGES_LIST_ITEM* newItem = (CHANGES_LIST_ITEM*)malloc(sizeof(CHANGES_LIST_ITEM));
 	newItem->prev = data->curChange;
 	newItem->next = NULL;
+	newItem->root = data->curChange->root;
 	newItem->originalLetter = srcLetter;
 	newItem->replacedTo = letterForReplacement;
 	data->curChange = newItem;
@@ -680,9 +683,8 @@ void handleReplacementMenu(CRYPTOGRAM* data)
 	system("cls");
 	printf("Замена проведена успешно.\n");
 	printEncryptionKey(data->letter);
-	printf(RETURN_TO_MENU_MESSAGE);
+	printf("Нажмите пробел, чтобы вернуться в главное меню.\n");
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
-	//TODO: несколько замен без выхода в главное меню
 }
 
 void undoCurChange(CRYPTOGRAM* data)
@@ -707,7 +709,6 @@ void handleRevertMenu(CRYPTOGRAM* data)
 	do
 	{
 		system("cls");
-
 		printf("1. Выход в главное меню\n");
 		if (data->curChange->prev == NULL && data->curChange->next == NULL)
 		{
@@ -764,7 +765,7 @@ void handleAutoreplacement(CRYPTOGRAM* data)
 {
 	system("cls");
 	replaceLettersAndUpdateHistoryAutomatically(data);
-	printf(RETURN_TO_MENU_MESSAGE);
+	printf("Нажмите пробел, чтобы вернуться в главное меню.\n");
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
@@ -794,13 +795,55 @@ int main(void)
 	setlocale(LC_ALL, "rus");
 
 	CRYPTOGRAM* data = initCryptogram();
-	if (data->numOfLetters == NO_LETTERS_IN_TEXT)
+	if (data->numOfLetters == NO_LETTERS)
 	{
 		printf("Полученные данные не подходят для расшифровки: отсутствуют буквы.\n");
 		_getch();
 	}
 	else handleMainCycle(data);
-	//TODO: добавить функцию, подчищающую память
+
+	CHANGES_LIST_ITEM* changesItem = data->curChange;
+	if (changesItem->prev == NULL && changesItem->next == NULL)
+	{
+		data->curChange = NULL;
+		free(data->curChange);
+	}
+	else
+	{
+		while (changesItem != NULL)
+		{
+			changesItem = data->curChange->root->next;
+			if (changesItem != NULL) changesItem->prev = NULL;
+			free(data->curChange->root);
+		}
+	}
+
+	/* TODO: заставить работать
+	WORD_LIST_ITEM* wordsItem = data->words->firstWord;
+	while (wordsItem != NULL)
+	{
+		wordsItem = data->words->firstWord->nextWord;
+
+		data->words->firstWord->chars = NULL;
+		free(data->words->firstWord->chars);
+
+		data->words->firstWord = NULL;
+		free(data->words->firstWord);
+	}*/
+	
+	data->words = NULL;
+	free(data->words);
+
+	data->text = NULL;
+	free(data->text);
+
+	data->curChange = NULL;
+	free(data->curChange);
+
+	data->letter = NULL;
+	free(data->letter);
+
+	data = NULL;
 	free(data);
 	return 0;
 }
