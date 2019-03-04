@@ -193,24 +193,6 @@ void calculateFrequencies(CRYPTOGRAM* data)
 	}
 }
 
-int cmpByFrequencyDesc(const void *a, const void *b)
-{
-	float aFrq = ((LETTER*)a)->frequencyInSrcText;
-	float bFrq = ((LETTER*)b)->frequencyInSrcText;
-	if (aFrq > bFrq) return -1;
-	if (aFrq < bFrq) return 1;
-	return 0;
-}
-
-int cmpBySymbolAsc(const void *a, const void *b)
-{
-	float aSymbol = ((LETTER*)a)->symbol;
-	float bSymbol = ((LETTER*)b)->symbol;
-	if (aSymbol > bSymbol) return 1;
-	if (aSymbol < bSymbol) return -1;
-	return 0;
-}
-
 BOOL areSameWords(char* a, char* b)
 {
 	BOOL areSame = TRUE;
@@ -506,7 +488,6 @@ void insertByUndeciphered(WORD_LIST_ITEM** newFirstWord, WORD_LIST_ITEM* item)
 WORD_LIST_ITEM* sortWordsByLen(WORD_LIST_ITEM* firstWord)
 {
 	WORD_LIST_ITEM* newfirstWord = NULL;
-
 	while (firstWord != NULL)
 	{
 		WORD_LIST_ITEM* item = firstWord;
@@ -524,7 +505,6 @@ WORD_LIST_ITEM* sortWordsByLen(WORD_LIST_ITEM* firstWord)
 			{
 				current = current->nextWord;
 			}
-
 			item->nextWord = current->nextWord;
 			current->nextWord = item;
 		}
@@ -532,10 +512,9 @@ WORD_LIST_ITEM* sortWordsByLen(WORD_LIST_ITEM* firstWord)
 	return newfirstWord;
 }
 
-WORD_LIST_ITEM* sortWordsByUndeciphered(WORD_LIST_ITEM* firstWord)
+WORD_LIST_ITEM* sortWordsByUndeciphered(WORD_LIST_ITEM* firstWord) //TODO: переписать в однк функцию с ByLen
 {
 	WORD_LIST_ITEM* newfirstWord = NULL;
-
 	while (firstWord != NULL)
 	{
 		WORD_LIST_ITEM* item = firstWord;
@@ -555,7 +534,6 @@ WORD_LIST_ITEM* sortWordsByUndeciphered(WORD_LIST_ITEM* firstWord)
 			{
 				current = current->nextWord;
 			}
-
 			item->nextWord = current->nextWord;
 			current->nextWord = item;
 		}
@@ -610,7 +588,7 @@ void handleWordsPrintingMenu(CRYPTOGRAM* data)
 	do
 	{
 		system("cls");
-		printf("1. Вывести слова, сгрупированные по длине\n");
+		printf("1. Вывести слова, сгрупированные по длине\n"); //TODO: вынести в функцию
 		printf("2. Вывести слова, сгрупированные по количеству букв без замен\n");
 		printf("3. Вернуться в главное меню\n");
 		printf("Введите код нужной команды ");
@@ -774,7 +752,6 @@ void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data) //TODO рефакт
 		printf("Невозможно определить оптимальную замену.\n");
 		return;
 	}
-
 	while (srcLetter != LETTER_IS_NOT_FOUND)
 	{
 		char letterForReplacement =
