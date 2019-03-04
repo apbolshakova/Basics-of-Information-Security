@@ -759,9 +759,9 @@ void handleRevertMenu(CRYPTOGRAM* data)
 	} while (operationCode != DECLINE_REVERT);
 }
 
-void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data)
+/*void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data) TODO: удалить, если новая работает
 {
-	float prevUndesipheredLetterFrq = INITIAL_FRQ;
+	float cuUndesipheredLetterFrq = INITIAL_FRQ;
 	float curUndesipheredLetterFrq = INITIAL_FRQ;
 	LETTER* srcLetter = LETTER_IS_NOT_FOUND;
 	do
@@ -773,7 +773,7 @@ void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data)
 			curUndesipheredLetterFrq = srcLetter->frequencyInSrcText;
 			if (curUndesipheredLetterFrq != prevUndesipheredLetterFrq)
 			{
-				//проверка данных не нужна, т.к. кол-во в ключе символов одинаковое
+				проверка данных не нужна, т.к. кол-во в ключе символов одинаковое
 				char letterForReplacement = 
 					findLetterWithMaxFrequencyFromUnusedAsReplacement(data->letter);
 				replaceLetter(srcLetter->symbol, letterForReplacement, data);
@@ -785,6 +785,54 @@ void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data)
 		}
 		else break;
 	} while (srcLetter != LETTER_IS_NOT_FOUND);
+}*/
+
+void deleteCurChange(CRYPTOGRAM* data)
+{
+	undoCurChange(data);
+	data->curChange->next = NULL;
+	free(data->curChange->next);
+}
+
+void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data)
+{
+	//сэмулировать замену
+
+	//пока она возможна:
+	  //получить теоретическую следующую
+	  //если частоты совпали, то отменить сэмулированную и выйти из цикла
+	  //если не совпали (в т.ч. больше букв нет) - записать совершённую замену в историю, goto начало
+	    //где сэмулировать теоретическую следующую
+
+	LETTER* srcLetter = findLetterWithMaxFrequencyFromUndesiphered(data->letter);
+	if (srcLetter == LETTER_IS_NOT_FOUND)
+	{
+		printf("Невозможно определить оптимальную замену.\n");
+		return;
+	}
+
+	while (srcLetter != LETTER_IS_NOT_FOUND)
+	{
+		char letterForReplacement =
+			findLetterWithMaxFrequencyFromUnusedAsReplacement(data->letter);
+		replaceLetter(srcLetter->symbol, letterForReplacement, data);
+		addNewElementToHistory(srcLetter->symbol, letterForReplacement, data);
+		printf("Символ %c был заменён на %c.\n",
+			srcLetter->symbol, letterForReplacement);
+
+		LETTER* nextSrcLetter = findLetterWithMaxFrequencyFromUndesiphered(data->letter);
+		if (nextSrcLetter == LETTER_IS_NOT_FOUND ||
+			srcLetter->frequencyInSrcText != nextSrcLetter->frequencyInSrcText)
+		{
+			srcLetter = nextSrcLetter;
+		}
+		else
+		{
+			deleteCurChange(data);
+			printf("Невозможно определить следующую оптимальную замену.\n");
+			break;
+		}
+	}
 }
 
 void handleAutoreplacement(CRYPTOGRAM* data)
