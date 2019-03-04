@@ -711,12 +711,12 @@ void undoCurChange(CRYPTOGRAM* data)
 }
 
 void redoCurChange(CRYPTOGRAM* data)
-{
-	(data->letter + data->curChange->originalLetter - 'А')->replacedTo = 
-		data->curChange->next->replacedTo;
+{	
 	CHANGES_LIST_ITEM* oldCurChange = data->curChange;
 	data->curChange = data->curChange->next;
 	data->curChange->prev = oldCurChange;
+	(data->letter + data->curChange->originalLetter - 'А')->replacedTo = 
+		data->curChange->replacedTo;
 }
 
 void handleRevertMenu(CRYPTOGRAM* data)
@@ -759,34 +759,6 @@ void handleRevertMenu(CRYPTOGRAM* data)
 	} while (operationCode != DECLINE_REVERT);
 }
 
-/*void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data) TODO: удалить, если новая работает
-{
-	float cuUndesipheredLetterFrq = INITIAL_FRQ;
-	float curUndesipheredLetterFrq = INITIAL_FRQ;
-	LETTER* srcLetter = LETTER_IS_NOT_FOUND;
-	do
-	{
-		prevUndesipheredLetterFrq = curUndesipheredLetterFrq;
-		srcLetter = findLetterWithMaxFrequencyFromUndesiphered(data->letter);
-		if (srcLetter != LETTER_IS_NOT_FOUND)
-		{
-			curUndesipheredLetterFrq = srcLetter->frequencyInSrcText;
-			if (curUndesipheredLetterFrq != prevUndesipheredLetterFrq)
-			{
-				проверка данных не нужна, т.к. кол-во в ключе символов одинаковое
-				char letterForReplacement = 
-					findLetterWithMaxFrequencyFromUnusedAsReplacement(data->letter);
-				replaceLetter(srcLetter->symbol, letterForReplacement, data);
-				addNewElementToHistory(srcLetter->symbol, letterForReplacement, data);
-				printf("Символ %c был заменён на %c.\n", 
-					srcLetter->symbol, letterForReplacement);
-			}
-			else break;
-		}
-		else break;
-	} while (srcLetter != LETTER_IS_NOT_FOUND);
-}*/
-
 void deleteCurChange(CRYPTOGRAM* data)
 {
 	undoCurChange(data);
@@ -794,16 +766,8 @@ void deleteCurChange(CRYPTOGRAM* data)
 	free(data->curChange->next);
 }
 
-void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data)
+void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data) //TODO рефакторинг
 {
-	//сэмулировать замену
-
-	//пока она возможна:
-	  //получить теоретическую следующую
-	  //если частоты совпали, то отменить сэмулированную и выйти из цикла
-	  //если не совпали (в т.ч. больше букв нет) - записать совершённую замену в историю, goto начало
-	    //где сэмулировать теоретическую следующую
-
 	LETTER* srcLetter = findLetterWithMaxFrequencyFromUndesiphered(data->letter);
 	if (srcLetter == LETTER_IS_NOT_FOUND)
 	{
@@ -817,13 +781,12 @@ void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data)
 			findLetterWithMaxFrequencyFromUnusedAsReplacement(data->letter);
 		replaceLetter(srcLetter->symbol, letterForReplacement, data);
 		addNewElementToHistory(srcLetter->symbol, letterForReplacement, data);
-		printf("Символ %c был заменён на %c.\n",
-			srcLetter->symbol, letterForReplacement);
 
 		LETTER* nextSrcLetter = findLetterWithMaxFrequencyFromUndesiphered(data->letter);
 		if (nextSrcLetter == LETTER_IS_NOT_FOUND ||
 			srcLetter->frequencyInSrcText != nextSrcLetter->frequencyInSrcText)
 		{
+			printf("Символ %c был заменён на %c.\n", srcLetter->symbol, letterForReplacement);
 			srcLetter = nextSrcLetter;
 		}
 		else
