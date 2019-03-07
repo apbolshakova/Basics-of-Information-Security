@@ -54,7 +54,7 @@ typedef struct Letter_
 
 typedef struct ChangesListItem_
 {
-	struct ChangesListItem_* root;
+	struct ChangesListItem_* head;
 	struct ChangesListItem_* prev;
 	struct ChangesListItem_* next;
 	char originalLetter;
@@ -95,10 +95,10 @@ void initLetters(letter_t* letter)
 	}
 }
 
-static changes_list_item_t* initialItem = NULL;
 changes_list_item_t* initChangesList()
 {
-	initialItem = (changes_list_item_t*)malloc(sizeof(changes_list_item_t));
+	changes_list_item_t* initialItem = (changes_list_item_t*)malloc(sizeof(changes_list_item_t));
+	initialItem->head = NULL;
 	initialItem->prev = NULL;
 	initialItem->next = NULL;
 	initialItem->originalLetter = NO_REPLACEMENT;
@@ -635,12 +635,13 @@ char getCyrrilicLetterOrExitSymbol()
 void addNewElementToHistory(char srcLetter, char letterForReplacement, cryptogram_t* data)
 {
 	changes_list_item_t* newItem = (changes_list_item_t*)malloc(sizeof(changes_list_item_t));
-	newItem->prev = data->curChange;
-	newItem->next = NULL;
-	newItem->root = data->curChange->root;
 	newItem->originalLetter = srcLetter;
 	newItem->replacedTo = letterForReplacement;
+	newItem->next = NULL;
+	newItem->prev = data->curChange;
+	if (data->curChange) data->curChange->next = newItem;
 	data->curChange = newItem;
+	if (data->curChange->head == NULL) data->curChange->head = newItem;
 }
 
 void replaceLetter(char srcLetter, char letterForReplacement, cryptogram_t* data)
@@ -817,21 +818,18 @@ int main(void)
 	}
 	else handleMainCycle(data);
 
-	/*CHANGES_LIST_ITEM* changesItem = data->curChange;
-	if (changesItem->prev == NULL && changesItem->next == NULL)
+
+
+	changes_list_item_t* changesItem = data->curChange->head;
+	changes_list_item_t* nextChangesItem = NULL;
+	while (changesItem)
 	{
-		data->curChange = NULL;
-		free(data->curChange);
+		nextChangesItem = changesItem->next;
+		free(changesItem);
+		changesItem = nextChangesItem;
 	}
-	else
-	{
-		while (changesItem != NULL)
-		{
-			changesItem = data->curChange->root->next;
-			if (changesItem != NULL) changesItem->prev = NULL;
-			free(data->curChange->root);
-		}
-	}*/
+	free(data->curChange);
+	data->curChange = NULL;
 
 	/* TODO: заставить работать
 	WORD_LIST_ITEM* wordsItem = data->words->firstWord;
