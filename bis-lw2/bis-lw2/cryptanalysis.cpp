@@ -15,7 +15,7 @@
 
 typedef enum OperationCode_
 {
-	PRINT_ANALYSIS_RESULT_AND_SUGGEST_REPLACEMENT = '1',
+	SUGGEST_REPLACEMENT = '1',
 	PRINT_WORDS,
 	PRINT_CRYPTOGRAM,     
 	REPLACE_LETTERS,
@@ -125,14 +125,14 @@ bool_t isLetter(char item)
 }
 
 //исправление считанных кодов символов, сдвиги найдены экспериментально
-char fixCodeForCyrillicCharFromInput(char item) 
+char fixCodeForCyrillicChar(char item) 
 {
 	if (-128 <= item && item <= -81) return item + 64;
 	if (-32 <= item && item <= -17) return item + 16;
 	return item;
 }
 
-int moveTextPtrToTheEndAndGetSizeOfText(char* text)
+int getSizeOfTextWithPtr(char* text)
 {
 	int sizeOfText = 0;
 	while (*(text))
@@ -143,7 +143,7 @@ int moveTextPtrToTheEndAndGetSizeOfText(char* text)
 	return sizeOfText;
 }
 
-void copyStringAndCalculateLettersEncounters(cryptogram_t* data, char* str)
+void copyStringAndCalculateEncounters(cryptogram_t* data, char* str)
 {
 	while (*str)
 	{
@@ -162,7 +162,7 @@ void copyStringAndCalculateLettersEncounters(cryptogram_t* data, char* str)
 void handleDataFromNewString(cryptogram_t* data, char* str)
 {
 	char* sav = data->text;
-	int sizeOfOldText = moveTextPtrToTheEndAndGetSizeOfText(data->text);
+	int sizeOfOldText = getSizeOfTextWithPtr(data->text);
 
 	data->text = sav;
 	data->text = (char*) realloc(data->text, 
@@ -170,7 +170,7 @@ void handleDataFromNewString(cryptogram_t* data, char* str)
 	sav = data->text;
 
 	data->text += sizeOfOldText;
-	copyStringAndCalculateLettersEncounters(data, str);
+	copyStringAndCalculateEncounters(data, str);
 	data->text = sav;
 }
 
@@ -238,7 +238,7 @@ void addNewWordToList(word_list_item_t* newWord, words_info_t* wordsInfo)
 	wordsInfo->lastWord->nextWord = NULL;
 }
 
-char* handleWordAndMovePtrToTheEndOfIt(words_info_t* wordsInfo, char* text) //TODO: рефакторинг
+char* handleWordWithPtr(words_info_t* wordsInfo, char* text) //TODO: рефакторинг
 {
 	char* textSav = text;
 	word_list_item_t* newWord = (word_list_item_t*)malloc(sizeof(word_list_item_t));
@@ -274,7 +274,7 @@ words_info_t* parseTextIntoWords(char* text)
 	while (*text)
 	{
 		while (*text && !isLetter(*text)) text++;
-		if (isLetter(*text)) text = handleWordAndMovePtrToTheEndOfIt(wordsInfo, text);
+		if (isLetter(*text)) text = handleWordWithPtr(wordsInfo, text);
 	}
 	text = sav;
 	return wordsInfo;
@@ -351,7 +351,7 @@ void printEncryptionKey(letter_t* letter)
 	printf("\n");
 }
 
-letter_t* findLetterWithMaxFrequencyFromUndesiphered(letter_t* letter)
+letter_t* findMaxFrqFromUndesiphered(letter_t* letter)
 {
 	letter_t* letterWithMaxFrq = LETTER_IS_NOT_FOUND;
 	for (int i = 0; i < ALPHABET_SIZE; i++)
@@ -380,7 +380,7 @@ bool_t isUsedAsReplacement(char symbolToCheck, letter_t* letter)
 	return isUsed;
 }
 
-char findLetterWithMaxFrequencyFromUnusedAsReplacement(letter_t* letter)
+char findMaxFrqFromNotReplacement(letter_t* letter)
 {
 	int index = 0;
 	while (index < ALPHABET_SIZE)
@@ -404,19 +404,19 @@ void printLettersFrequencies(letter_t* letter)
 
 void printReplacementSuggestion(letter_t* letter)
 {
-	letter_t* srcLetter = findLetterWithMaxFrequencyFromUndesiphered(letter);
+	letter_t* srcLetter = findMaxFrqFromUndesiphered(letter);
 	if (srcLetter == LETTER_IS_NOT_FOUND) 
 		printf("Невозможно определить оптимальную замену.\n");
 	else
 	{
-		char letterForReplacement = findLetterWithMaxFrequencyFromUnusedAsReplacement(letter);
+		char letterForReplacement = findMaxFrqFromNotReplacement(letter);
 		printf("Исходя из частотного анализа сделан вывод, ");
 		printf("что букву %c, возможно, следует поменять на %c.\n", 
 			srcLetter->symbol, letterForReplacement);
 	}
 }
 
-void analyseFrequencyAndSuggestReplacement(cryptogram_t* data)
+void suggestReplacement(cryptogram_t* data)
 {
 	system("cls");
 
@@ -427,7 +427,7 @@ void analyseFrequencyAndSuggestReplacement(cryptogram_t* data)
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
-void calculateNumOfUndesipheredLetters(cryptogram_t* data)
+void getNumOfUndesiphered(cryptogram_t* data)
 {
 	word_list_item_t* word = data->words->firstWord; 
 	while (word != NULL)
@@ -598,7 +598,7 @@ void handleWordsPrintingMenu(cryptogram_t* data)
 		{
 		case BY_LENGTH: data->words->firstWord = sortWordsByLen(data->words->firstWord);
 			printWords(BY_LENGTH, data); break; //длины подсчитаны при инициализации
-		case BY_UNDECIPHERED: calculateNumOfUndesipheredLetters(data);
+		case BY_UNDECIPHERED: getNumOfUndesiphered(data);
 			data->words->firstWord = sortWordsByUndeciphered(data->words->firstWord);
 			printWords(BY_UNDECIPHERED, data);
 			break;
@@ -621,13 +621,13 @@ char getCyrrilicLetterOrExitSymbol()
 {
 	char letter = '\n'; //для исправления проблемы со считанным ENTER во входном потоке
 	while (letter == '\n') scanf("%c", &letter);
-	letter = fixCodeForCyrillicCharFromInput(letter);
+	letter = fixCodeForCyrillicChar(letter);
 	while (letter != RETURN_TO_MENU_BTN_CODE && !isLetter(letter))
 	{
 		printf("Недопустимый символ. Введите букву русского алфавита или пробел для выхода в главное меню: ");
 		scanf("%c", &letter);
 		while (letter == '\n') scanf("%c", &letter);
-		letter = fixCodeForCyrillicCharFromInput(letter);
+		letter = fixCodeForCyrillicChar(letter);
 	}
 	return letter;
 }
@@ -745,9 +745,9 @@ void deleteCurChange(cryptogram_t* data)
 	free(data->curChange->next);
 }
 
-void replaceLettersAndUpdateHistoryAutomatically(cryptogram_t* data) //TODO рефакторинг
+void replaceAndUpdateHistoryAuto(cryptogram_t* data) //TODO рефакторинг
 {
-	letter_t* srcLetter = findLetterWithMaxFrequencyFromUndesiphered(data->letter);
+	letter_t* srcLetter = findMaxFrqFromUndesiphered(data->letter);
 	if (srcLetter == LETTER_IS_NOT_FOUND)
 	{
 		printf("Невозможно определить оптимальную замену.\n");
@@ -756,11 +756,11 @@ void replaceLettersAndUpdateHistoryAutomatically(cryptogram_t* data) //TODO рефа
 	while (srcLetter != LETTER_IS_NOT_FOUND)
 	{
 		char letterForReplacement =
-			findLetterWithMaxFrequencyFromUnusedAsReplacement(data->letter);
+			findMaxFrqFromNotReplacement(data->letter);
 		replaceLetter(srcLetter->symbol, letterForReplacement, data);
 		addNewElementToHistory(srcLetter->symbol, letterForReplacement, data);
 
-		letter_t* nextSrcLetter = findLetterWithMaxFrequencyFromUndesiphered(data->letter);
+		letter_t* nextSrcLetter = findMaxFrqFromUndesiphered(data->letter);
 		if (nextSrcLetter == LETTER_IS_NOT_FOUND ||
 			srcLetter->frequencyInSrcText != nextSrcLetter->frequencyInSrcText)
 		{
@@ -779,7 +779,7 @@ void replaceLettersAndUpdateHistoryAutomatically(cryptogram_t* data) //TODO рефа
 void handleAutoreplacement(cryptogram_t* data)
 {
 	system("cls");
-	replaceLettersAndUpdateHistoryAutomatically(data);
+	replaceAndUpdateHistoryAuto(data);
 	printf("Нажмите пробел, чтобы вернуться в главное меню.\n");
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
@@ -794,8 +794,7 @@ void handleMainCycle(cryptogram_t* data)
 		scanf("%c", &operationCode);
 		switch (operationCode)
 		{
-		case PRINT_ANALYSIS_RESULT_AND_SUGGEST_REPLACEMENT: 
-			analyseFrequencyAndSuggestReplacement(data); break;
+		case SUGGEST_REPLACEMENT: suggestReplacement(data); break;
 		case PRINT_WORDS: handleWordsPrintingMenu(data); break;
 		case PRINT_CRYPTOGRAM: printCryptogram(data); break;
 		case REPLACE_LETTERS: handleReplacementMenu(data); break;
@@ -831,19 +830,19 @@ int main(void)
 	free(data->curChange);
 	data->curChange = NULL;
 
-	/* TODO: заставить работать
-	WORD_LIST_ITEM* wordsItem = data->words->firstWord;
-	while (wordsItem != NULL)
+
+	word_list_item_t* wordsItem = data->words->firstWord;
+	word_list_item_t* nextWordsItem = NULL;
+	while (wordsItem)
 	{
-		wordsItem = data->words->firstWord->nextWord;
-
-		data->words->firstWord->chars = NULL;
-		free(data->words->firstWord->chars);
-
-		data->words->firstWord = NULL;
-		free(data->words->firstWord);
-	}*/
+		nextWordsItem = wordsItem->nextWord;
+		free(wordsItem);
+		wordsItem = nextWordsItem;
+	}
+	free(data->words);
+	data->words = NULL;
 	
+
 	data->words = NULL;
 	free(data->words);
 
