@@ -13,7 +13,7 @@
 #define DATA_PATH "input.txt"
 #define LETTERS_IN_ORDER_BY_FREQUENCY_DESC "оеаинтсрвлкмдпуяыьгзбчйчжшюцщэфъ"
 
-typedef enum OperationCode
+typedef enum OperationCode_
 {
 	PRINT_ANALYSIS_RESULT_AND_SUGGEST_REPLACEMENT = '1',
 	PRINT_WORDS,
@@ -22,69 +22,69 @@ typedef enum OperationCode
 	REVERT,   
 	AUTOREPLACEMENT, 
 	EXIT 
-} OPERATION_CODE;
+} operation_code_t;
 
-typedef enum Bool
+typedef enum Bool_
 { 
 	FALSE, 
 	TRUE 
-} BOOL;
+} bool_t;
 
-typedef enum PrintingOperationCode
+typedef enum PrintingOperationCode_
 {
 	BY_LENGTH = '1',
 	BY_UNDECIPHERED,
 	DECLINE_PRINTING
-} PRINTING_OPERATION_CODE;
+} printing_operation_code_t;
 
-typedef enum HistoryOperationCode
+typedef enum HistoryOperationCode_
 {
 	DECLINE_REVERT = '1',
 	UNDO,
 	REDO
-} HISTORY_OPERATION_CODE;
+} history_operation_code_t;
 
-typedef struct Letter
+typedef struct Letter_
 {
 	char symbol;
 	int encounteredInSrcText;
 	float frequencyInSrcText;
 	char replacedTo;
-} LETTER;
+} letter_t;
 
-typedef struct ChangesListItem
+typedef struct ChangesListItem_
 {
-	struct ChangesListItem* root;
-	struct ChangesListItem* prev;
-	struct ChangesListItem* next;
+	struct ChangesListItem_* root;
+	struct ChangesListItem_* prev;
+	struct ChangesListItem_* next;
 	char originalLetter;
 	char replacedTo;
-} CHANGES_LIST_ITEM;
+} changes_list_item_t;
 
-typedef struct wordListItem
+typedef struct WordListItem_
 {
 	char* chars;
 	int len;
 	int numOfUndecipheredLetters;
-	struct wordListItem* nextWord;
-} WORD_LIST_ITEM;
+	struct WordListItem_* nextWord;
+} word_list_item_t;
 
-typedef struct wordsInfo
+typedef struct WordsInfo_
 {
-	WORD_LIST_ITEM* firstWord;
-	WORD_LIST_ITEM* lastWord;
-} WORDS_INFO;
+	word_list_item_t* firstWord;
+	word_list_item_t* lastWord;
+} words_info_t;
 
-typedef struct Cryptogram
+typedef struct Cryptogram_
 {
 	char* text;
 	int numOfLetters;
-	LETTER* letter;
-	CHANGES_LIST_ITEM* curChange;
-	WORDS_INFO* words;
-} CRYPTOGRAM;
+	letter_t* letter;
+	changes_list_item_t* curChange;
+	words_info_t* words;
+} cryptogram_t;
 
-void initLetters(LETTER* letter)
+void initLetters(letter_t* letter)
 {
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
@@ -95,10 +95,10 @@ void initLetters(LETTER* letter)
 	}
 }
 
-CHANGES_LIST_ITEM* initChangesList()
+static changes_list_item_t* initialItem = NULL;
+changes_list_item_t* initChangesList()
 {
-	CHANGES_LIST_ITEM* initialItem = (CHANGES_LIST_ITEM*)malloc(sizeof(CHANGES_LIST_ITEM));
-	initialItem->root = initialItem;
+	initialItem = (changes_list_item_t*)malloc(sizeof(changes_list_item_t));
 	initialItem->prev = NULL;
 	initialItem->next = NULL;
 	initialItem->originalLetter = NO_REPLACEMENT;
@@ -106,19 +106,19 @@ CHANGES_LIST_ITEM* initChangesList()
 	return initialItem;
 }
 
-BOOL isCapitalLetter(char item)
+bool_t isCapitalLetter(char item)
 {
 	if ('А' <= item && item <= 'Я') return TRUE;
 	else return FALSE;
 }
 
-BOOL isLowercaseLetter(char item)
+bool_t isLowercaseLetter(char item)
 {
 	if ('а' <= item && item <= 'я') return TRUE;
 	else return FALSE;
 }
 
-BOOL isLetter(char item)
+bool_t isLetter(char item)
 {
 	if ('А' <= item && item <= 'я') return TRUE;
 	else return FALSE;
@@ -143,7 +143,7 @@ int moveTextPtrToTheEndAndGetSizeOfText(char* text)
 	return sizeOfText;
 }
 
-void copyStringAndCalculateLettersEncounters(CRYPTOGRAM* data, char* str)
+void copyStringAndCalculateLettersEncounters(cryptogram_t* data, char* str)
 {
 	while (*str)
 	{
@@ -159,7 +159,7 @@ void copyStringAndCalculateLettersEncounters(CRYPTOGRAM* data, char* str)
 	*(data->text) = '\0';
 }
 
-void handleDataFromNewString(CRYPTOGRAM* data, char* str)
+void handleDataFromNewString(cryptogram_t* data, char* str)
 {
 	char* sav = data->text;
 	int sizeOfOldText = moveTextPtrToTheEndAndGetSizeOfText(data->text);
@@ -174,7 +174,7 @@ void handleDataFromNewString(CRYPTOGRAM* data, char* str)
 	data->text = sav;
 }
 
-void initTextAndCalculateEncounters(CRYPTOGRAM* data, FILE* f)
+void initTextAndCalculateEncounters(cryptogram_t* data, FILE* f)
 {
 	fclose(f);
 	f = fopen(DATA_PATH, "r");
@@ -184,7 +184,7 @@ void initTextAndCalculateEncounters(CRYPTOGRAM* data, FILE* f)
 	free(temp);
 }
 
-void calculateFrequencies(CRYPTOGRAM* data)
+void calculateFrequencies(cryptogram_t* data)
 {
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
@@ -193,9 +193,9 @@ void calculateFrequencies(CRYPTOGRAM* data)
 	}
 }
 
-BOOL areSameWords(char* a, char* b)
+bool_t areSameWords(char* a, char* b)
 {
-	BOOL areSame = TRUE;
+	bool_t areSame = TRUE;
 	while (*a && *b)
 	{
 		if (*a != *b)
@@ -203,17 +203,17 @@ BOOL areSameWords(char* a, char* b)
 			areSame = FALSE;
 			break;
 		}
-		a++;
-		b++;
+		++a;
+		++b;
 	}
 	if (*a || *b) areSame = FALSE; //должны были закончиться одновременно
 	return areSame;
 }
 
-BOOL wordIsUnique(WORD_LIST_ITEM* newWord, WORDS_INFO* wordsInfo)
+bool_t wordIsUnique(word_list_item_t* newWord, words_info_t* wordsInfo)
 {
-	WORD_LIST_ITEM* item = wordsInfo->firstWord;
-	BOOL isUnique = TRUE;
+	word_list_item_t* item = wordsInfo->firstWord;
+	bool_t isUnique = TRUE;
 	while (item != NULL && isUnique)
 	{
 		if (item->len == newWord->len && 
@@ -223,7 +223,7 @@ BOOL wordIsUnique(WORD_LIST_ITEM* newWord, WORDS_INFO* wordsInfo)
 	return isUnique;
 }
 
-void addNewWordToList(WORD_LIST_ITEM* newWord, WORDS_INFO* wordsInfo)
+void addNewWordToList(word_list_item_t* newWord, words_info_t* wordsInfo)
 {
 	if (wordsInfo->lastWord == NULL) //список пуст
 	{
@@ -238,10 +238,10 @@ void addNewWordToList(WORD_LIST_ITEM* newWord, WORDS_INFO* wordsInfo)
 	wordsInfo->lastWord->nextWord = NULL;
 }
 
-char* handleWordAndMovePtrToTheEndOfIt(WORDS_INFO* wordsInfo, char* text) //TODO: рефакторинг
+char* handleWordAndMovePtrToTheEndOfIt(words_info_t* wordsInfo, char* text) //TODO: рефакторинг
 {
 	char* textSav = text;
-	WORD_LIST_ITEM* newWord = (WORD_LIST_ITEM*)malloc(sizeof(WORD_LIST_ITEM));
+	word_list_item_t* newWord = (word_list_item_t*)malloc(sizeof(word_list_item_t));
 	newWord->len = 0;
 	newWord->numOfUndecipheredLetters = 0; 
 	while (isLetter(*text))
@@ -265,10 +265,10 @@ char* handleWordAndMovePtrToTheEndOfIt(WORDS_INFO* wordsInfo, char* text) //TODO
 	return text;
 }
 
-WORDS_INFO* parseTextIntoWords(char* text)
+words_info_t* parseTextIntoWords(char* text)
 {
 	char* sav = text;
-	WORDS_INFO* wordsInfo = (WORDS_INFO*)malloc(sizeof(WORDS_INFO));
+	words_info_t* wordsInfo = (words_info_t*)malloc(sizeof(words_info_t));
 	wordsInfo->firstWord = NULL;
 	wordsInfo->lastWord = NULL;
 	while (*text)
@@ -280,12 +280,12 @@ WORDS_INFO* parseTextIntoWords(char* text)
 	return wordsInfo;
 }
 
-CRYPTOGRAM* initCryptogram()
+cryptogram_t* initCryptogram()
 {
-	CRYPTOGRAM* data = (CRYPTOGRAM*) malloc(sizeof(CRYPTOGRAM));
+	cryptogram_t* data = (cryptogram_t*) malloc(sizeof(cryptogram_t));
 	data->text = malloc(sizeof(char));
 	*(data->text) = '\0';
-	data->letter = (LETTER*) calloc(ALPHABET_SIZE, sizeof(LETTER));
+	data->letter = (letter_t*) calloc(ALPHABET_SIZE, sizeof(letter_t));
 	data->numOfLetters = 0;
 	data->curChange = initChangesList();
 
@@ -319,7 +319,7 @@ void printMainMenu()
 	printf("(любой код, кроме перечисленных, будет проигнорирован): ");
 }
 
-void printText(CRYPTOGRAM* data)
+void printText(cryptogram_t* data)
 {
 	printf("Текст криптограммы с выполненными заменами:\n\n");
 	char* ptr = data->text;
@@ -338,7 +338,7 @@ void printText(CRYPTOGRAM* data)
 	printf("\n\n");
 }
 
-void printEncryptionKey(LETTER* letter)
+void printEncryptionKey(letter_t* letter)
 {
 	printf("Текущий ключ шифрования:\n");
 	for (int i = 0; i < ALPHABET_SIZE; i++)
@@ -351,9 +351,9 @@ void printEncryptionKey(LETTER* letter)
 	printf("\n");
 }
 
-LETTER* findLetterWithMaxFrequencyFromUndesiphered(LETTER* letter)
+letter_t* findLetterWithMaxFrequencyFromUndesiphered(letter_t* letter)
 {
-	LETTER* letterWithMaxFrq = LETTER_IS_NOT_FOUND;
+	letter_t* letterWithMaxFrq = LETTER_IS_NOT_FOUND;
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
 		if ((letter + i)->replacedTo == NO_REPLACEMENT
@@ -366,9 +366,9 @@ LETTER* findLetterWithMaxFrequencyFromUndesiphered(LETTER* letter)
 	return letterWithMaxFrq;
 }
 
-BOOL isUsedAsReplacement(char symbolToCheck, LETTER* letter)
+bool_t isUsedAsReplacement(char symbolToCheck, letter_t* letter)
 {
-	BOOL isUsed = FALSE;
+	bool_t isUsed = FALSE;
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
 		if (symbolToCheck == (letter + i)->replacedTo)
@@ -380,7 +380,7 @@ BOOL isUsedAsReplacement(char symbolToCheck, LETTER* letter)
 	return isUsed;
 }
 
-char findLetterWithMaxFrequencyFromUnusedAsReplacement(LETTER* letter)
+char findLetterWithMaxFrequencyFromUnusedAsReplacement(letter_t* letter)
 {
 	int index = 0;
 	while (index < ALPHABET_SIZE)
@@ -392,7 +392,7 @@ char findLetterWithMaxFrequencyFromUnusedAsReplacement(LETTER* letter)
     else return LETTERS_IN_ORDER_BY_FREQUENCY_DESC[index];
 }
 
-void printLettersFrequencies(LETTER* letter)
+void printLettersFrequencies(letter_t* letter)
 {
 	printf("Частоты встреч букв во входной криптограмме:\n");
 	for (int i = 0; i < ALPHABET_SIZE; i++)
@@ -402,9 +402,9 @@ void printLettersFrequencies(LETTER* letter)
 	printf("\n");
 }
 
-void printReplacementSuggestion(LETTER* letter)
+void printReplacementSuggestion(letter_t* letter)
 {
-	LETTER* srcLetter = findLetterWithMaxFrequencyFromUndesiphered(letter);
+	letter_t* srcLetter = findLetterWithMaxFrequencyFromUndesiphered(letter);
 	if (srcLetter == LETTER_IS_NOT_FOUND) 
 		printf("Невозможно определить оптимальную замену.\n");
 	else
@@ -416,7 +416,7 @@ void printReplacementSuggestion(LETTER* letter)
 	}
 }
 
-void analyseFrequencyAndSuggestReplacement(CRYPTOGRAM* data)
+void analyseFrequencyAndSuggestReplacement(cryptogram_t* data)
 {
 	system("cls");
 
@@ -427,9 +427,9 @@ void analyseFrequencyAndSuggestReplacement(CRYPTOGRAM* data)
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
-void calculateNumOfUndesipheredLetters(CRYPTOGRAM* data)
+void calculateNumOfUndesipheredLetters(cryptogram_t* data)
 {
-	WORD_LIST_ITEM* word = data->words->firstWord; 
+	word_list_item_t* word = data->words->firstWord; 
 	while (word != NULL)
 	{
 		word->numOfUndecipheredLetters = 0;
@@ -444,7 +444,7 @@ void calculateNumOfUndesipheredLetters(CRYPTOGRAM* data)
 	}
 }
 
-void insertByLen(WORD_LIST_ITEM** newFirstWord, WORD_LIST_ITEM** itemToInsert)
+void insertByLen(word_list_item_t** newFirstWord, word_list_item_t** itemToInsert)
 {
 	if (*newFirstWord == NULL || 
 		(*itemToInsert)->numOfUndecipheredLetters < (*newFirstWord)->numOfUndecipheredLetters)
@@ -454,7 +454,7 @@ void insertByLen(WORD_LIST_ITEM** newFirstWord, WORD_LIST_ITEM** itemToInsert)
 	}
 	else
 	{
-		WORD_LIST_ITEM** currentToCompareWith = *newFirstWord;
+		word_list_item_t** currentToCompareWith = *newFirstWord;
 		while (currentToCompareWith != NULL && 
 			      !((*itemToInsert)->numOfUndecipheredLetters < 
 			      (*currentToCompareWith)->numOfUndecipheredLetters))
@@ -466,7 +466,7 @@ void insertByLen(WORD_LIST_ITEM** newFirstWord, WORD_LIST_ITEM** itemToInsert)
 	}
 }
 
-void insertByUndeciphered(WORD_LIST_ITEM** newFirstWord, WORD_LIST_ITEM* item)
+void insertByUndeciphered(word_list_item_t** newFirstWord, word_list_item_t* item)
 {
 	if (*newFirstWord == NULL || item->len < (*newFirstWord)->len)
 	{
@@ -475,7 +475,7 @@ void insertByUndeciphered(WORD_LIST_ITEM** newFirstWord, WORD_LIST_ITEM* item)
 	}
 	else
 	{
-		WORD_LIST_ITEM* current = *newFirstWord;
+		word_list_item_t* current = *newFirstWord;
 		while (current->nextWord != NULL && !(item->len < current->nextWord->len))
 		{
 			current = current->nextWord;
@@ -485,12 +485,12 @@ void insertByUndeciphered(WORD_LIST_ITEM** newFirstWord, WORD_LIST_ITEM* item)
 	}
 }
 
-WORD_LIST_ITEM* sortWordsByLen(WORD_LIST_ITEM* firstWord)
+word_list_item_t* sortWordsByLen(word_list_item_t* firstWord)
 {
-	WORD_LIST_ITEM* newfirstWord = NULL;
+	word_list_item_t* newfirstWord = NULL;
 	while (firstWord != NULL)
 	{
-		WORD_LIST_ITEM* item = firstWord;
+		word_list_item_t* item = firstWord;
 		firstWord = firstWord->nextWord;
 
 		if (newfirstWord == NULL || item->len < newfirstWord->len)
@@ -500,7 +500,7 @@ WORD_LIST_ITEM* sortWordsByLen(WORD_LIST_ITEM* firstWord)
 		}
 		else
 		{
-			WORD_LIST_ITEM* current = newfirstWord;
+			word_list_item_t* current = newfirstWord;
 			while (current->nextWord != NULL && !(item->len < current->nextWord->len))
 			{
 				current = current->nextWord;
@@ -512,12 +512,12 @@ WORD_LIST_ITEM* sortWordsByLen(WORD_LIST_ITEM* firstWord)
 	return newfirstWord;
 }
 
-WORD_LIST_ITEM* sortWordsByUndeciphered(WORD_LIST_ITEM* firstWord) //TODO: переписать в однк функцию с ByLen
+word_list_item_t* sortWordsByUndeciphered(word_list_item_t* firstWord) //TODO: переписать в одну функцию с ByLen
 {
-	WORD_LIST_ITEM* newfirstWord = NULL;
+	word_list_item_t* newfirstWord = NULL;
 	while (firstWord != NULL)
 	{
-		WORD_LIST_ITEM* item = firstWord;
+		word_list_item_t* item = firstWord;
 		firstWord = firstWord->nextWord;
 
 		if (newfirstWord == NULL || 
@@ -528,7 +528,7 @@ WORD_LIST_ITEM* sortWordsByUndeciphered(WORD_LIST_ITEM* firstWord) //TODO: переп
 		}
 		else
 		{
-			WORD_LIST_ITEM* current = newfirstWord;
+			word_list_item_t* current = newfirstWord;
 			while (current->nextWord != NULL && 
 				item->numOfUndecipheredLetters >= current->nextWord->numOfUndecipheredLetters)
 			{
@@ -541,7 +541,7 @@ WORD_LIST_ITEM* sortWordsByUndeciphered(WORD_LIST_ITEM* firstWord) //TODO: переп
 	return newfirstWord;
 }
 
-void printCharsWithEncryption(char* ptr, CRYPTOGRAM* data)
+void printCharsWithEncryption(char* ptr, cryptogram_t* data)
 {
 	while (*ptr)
 	{
@@ -553,11 +553,11 @@ void printCharsWithEncryption(char* ptr, CRYPTOGRAM* data)
 	printf("\n");
 }
 
-void printWords(PRINTING_OPERATION_CODE order, CRYPTOGRAM* data)
+void printWords(printing_operation_code_t order, cryptogram_t* data)
 {
 	system("cls");
 
-	WORD_LIST_ITEM* word = data->words->firstWord;
+	word_list_item_t* word = data->words->firstWord;
 	int prevValue = 0;
 	if (order == BY_LENGTH) prevValue = word->len;
 	if (order == BY_UNDECIPHERED) prevValue = word->numOfUndecipheredLetters;
@@ -582,9 +582,9 @@ void printWords(PRINTING_OPERATION_CODE order, CRYPTOGRAM* data)
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
-void handleWordsPrintingMenu(CRYPTOGRAM* data)
+void handleWordsPrintingMenu(cryptogram_t* data)
 {
-	PRINTING_OPERATION_CODE operationCode = NULL_OPERATION;
+	printing_operation_code_t operationCode = NULL_OPERATION;
 	do
 	{
 		system("cls");
@@ -607,7 +607,7 @@ void handleWordsPrintingMenu(CRYPTOGRAM* data)
 	} while (operationCode != DECLINE_PRINTING);
 }
 
-void printCryptogram(CRYPTOGRAM* data)
+void printCryptogram(cryptogram_t* data)
 {
 	system("cls");
 	printEncryptionKey(data->letter);
@@ -632,9 +632,9 @@ char getCyrrilicLetterOrExitSymbol()
 	return letter;
 }
 
-void addNewElementToHistory(char srcLetter, char letterForReplacement, CRYPTOGRAM* data)
+void addNewElementToHistory(char srcLetter, char letterForReplacement, cryptogram_t* data)
 {
-	CHANGES_LIST_ITEM* newItem = (CHANGES_LIST_ITEM*)malloc(sizeof(CHANGES_LIST_ITEM));
+	changes_list_item_t* newItem = (changes_list_item_t*)malloc(sizeof(changes_list_item_t));
 	newItem->prev = data->curChange;
 	newItem->next = NULL;
 	newItem->root = data->curChange->root;
@@ -643,12 +643,12 @@ void addNewElementToHistory(char srcLetter, char letterForReplacement, CRYPTOGRA
 	data->curChange = newItem;
 }
 
-void replaceLetter(char srcLetter, char letterForReplacement, CRYPTOGRAM* data)
+void replaceLetter(char srcLetter, char letterForReplacement, cryptogram_t* data)
 {
 	(data->letter + srcLetter - 'А')->replacedTo = letterForReplacement;
 }
 
-void handleReplacementMenu(CRYPTOGRAM* data)
+void handleReplacementMenu(cryptogram_t* data)
 {
 	system("cls");
 	printEncryptionKey(data->letter);
@@ -680,26 +680,26 @@ void handleReplacementMenu(CRYPTOGRAM* data)
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
-void undoCurChange(CRYPTOGRAM* data)
+void undoCurChange(cryptogram_t* data)
 {
 	(data->letter + data->curChange->originalLetter - 'А')->replacedTo = NO_REPLACEMENT;
-	CHANGES_LIST_ITEM* oldCurChange = data->curChange;
+	changes_list_item_t* oldCurChange = data->curChange;
 	data->curChange = data->curChange->prev;
 	data->curChange->next = oldCurChange;
 }
 
-void redoCurChange(CRYPTOGRAM* data)
+void redoCurChange(cryptogram_t* data)
 {	
-	CHANGES_LIST_ITEM* oldCurChange = data->curChange;
+	changes_list_item_t* oldCurChange = data->curChange;
 	data->curChange = data->curChange->next;
 	data->curChange->prev = oldCurChange;
 	(data->letter + data->curChange->originalLetter - 'А')->replacedTo = 
 		data->curChange->replacedTo;
 }
 
-void handleRevertMenu(CRYPTOGRAM* data)
+void handleRevertMenu(cryptogram_t* data)
 {
-	HISTORY_OPERATION_CODE operationCode = NULL_OPERATION;
+	history_operation_code_t operationCode = NULL_OPERATION;
 	do
 	{
 		system("cls");
@@ -737,16 +737,16 @@ void handleRevertMenu(CRYPTOGRAM* data)
 	} while (operationCode != DECLINE_REVERT);
 }
 
-void deleteCurChange(CRYPTOGRAM* data)
+void deleteCurChange(cryptogram_t* data)
 {
 	undoCurChange(data);
 	data->curChange->next = NULL;
 	free(data->curChange->next);
 }
 
-void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data) //TODO рефакторинг
+void replaceLettersAndUpdateHistoryAutomatically(cryptogram_t* data) //TODO рефакторинг
 {
-	LETTER* srcLetter = findLetterWithMaxFrequencyFromUndesiphered(data->letter);
+	letter_t* srcLetter = findLetterWithMaxFrequencyFromUndesiphered(data->letter);
 	if (srcLetter == LETTER_IS_NOT_FOUND)
 	{
 		printf("Невозможно определить оптимальную замену.\n");
@@ -759,7 +759,7 @@ void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data) //TODO рефакт
 		replaceLetter(srcLetter->symbol, letterForReplacement, data);
 		addNewElementToHistory(srcLetter->symbol, letterForReplacement, data);
 
-		LETTER* nextSrcLetter = findLetterWithMaxFrequencyFromUndesiphered(data->letter);
+		letter_t* nextSrcLetter = findLetterWithMaxFrequencyFromUndesiphered(data->letter);
 		if (nextSrcLetter == LETTER_IS_NOT_FOUND ||
 			srcLetter->frequencyInSrcText != nextSrcLetter->frequencyInSrcText)
 		{
@@ -775,7 +775,7 @@ void replaceLettersAndUpdateHistoryAutomatically(CRYPTOGRAM* data) //TODO рефакт
 	}
 }
 
-void handleAutoreplacement(CRYPTOGRAM* data)
+void handleAutoreplacement(cryptogram_t* data)
 {
 	system("cls");
 	replaceLettersAndUpdateHistoryAutomatically(data);
@@ -783,9 +783,9 @@ void handleAutoreplacement(CRYPTOGRAM* data)
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
-void handleMainCycle(CRYPTOGRAM* data)
+void handleMainCycle(cryptogram_t* data)
 {
-	OPERATION_CODE operationCode = NULL_OPERATION;
+	operation_code_t operationCode = NULL_OPERATION;
 	do 
 	{
 		system("cls");
@@ -809,7 +809,7 @@ int main(void)
 {
 	setlocale(LC_ALL, "rus");
 
-	CRYPTOGRAM* data = initCryptogram();
+	cryptogram_t* data = initCryptogram();
 	if (data->numOfLetters == NO_LETTERS)
 	{
 		printf("Полученные данные не подходят для расшифровки: отсутствуют буквы.\n");
