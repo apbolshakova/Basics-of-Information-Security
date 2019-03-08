@@ -47,7 +47,8 @@ words_list_item_t* sortWordsByUndeciphered(words_list_item_t* firstWord);
 
 void printCharsWithEncryption(char* ptr, cryptogram_t* data);
 void printWords(printing_operation_code_t order, cryptogram_t* data);
-void handleWordsPrintingMenu(cryptogram_t* data);
+void handleWordsMenu(cryptogram_t* data);
+void printWordsMenu();
 
 void printCryptogram(cryptogram_t* data);
 

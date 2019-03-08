@@ -26,7 +26,7 @@ void handleMainCycle(cryptogram_t* data)
 		switch (operationCode)
 		{
 		case SUGGEST_REPLACEMENT: suggestReplacement(data); break;
-		case PRINT_WORDS: handleWordsPrintingMenu(data); break;
+		case PRINT_WORDS: handleWordsMenu(data); break;
 		case PRINT_CRYPTOGRAM: printCryptogram(data); break;
 		case REPLACE_LETTERS: handleReplacementMenu(data); break;
 		case REVERT: handleRevertMenu(data); break;

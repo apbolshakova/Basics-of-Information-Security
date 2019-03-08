@@ -68,7 +68,7 @@ void handleAutoreplacement(cryptogram_t* data)
 	while (_getch() != RETURN_TO_MENU_BTN_CODE);
 }
 
-void replaceAndUpdateHistoryAuto(cryptogram_t* data) //TODO рефакторинг
+void replaceAndUpdateHistoryAuto(cryptogram_t* data)
 {
 	letter_t* srcLetter = findMaxFrqFromUndesiphered(data->letter);
 	if (srcLetter == LETTER_IS_NOT_FOUND)
@@ -78,8 +78,7 @@ void replaceAndUpdateHistoryAuto(cryptogram_t* data) //TODO рефакторинг
 	}
 	while (srcLetter != LETTER_IS_NOT_FOUND)
 	{
-		char letterForReplacement =
-			findMaxFrqFromNotReplacement(data->letter);
+		char letterForReplacement = findMaxFrqFromNotReplacement(data->letter);
 		replaceLetter(srcLetter->symbol, letterForReplacement, data);
 		addElementToHistory(srcLetter->symbol, letterForReplacement, data);
 

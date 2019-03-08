@@ -8,10 +8,7 @@ void parseTextIntoWords(cryptogram_t* data)
 	while (*data->text)
 	{
 		while (*data->text && !isLetter(*data->text)) data->text++;
-		if (isLetter(*data->text))
-		{
-			addWordToList(data);
-		}
+		if (isLetter(*data->text)) addWordToList(data);
 	}
 	data->text = sav;
 }
@@ -50,17 +47,13 @@ void handleWordData(words_list_item_t* newWord, cryptogram_t* data)
 	newWord->chars = charsSav;
 }
 
-void handleWordsPrintingMenu(cryptogram_t* data)
+void handleWordsMenu(cryptogram_t* data)
 {
 	printing_operation_code_t operationCode = NULL_OPERATION;
 	do
 	{
 		system("cls");
-		printf("1. Вывести слова, сгрупированные по длине\n"); //TODO: вынести в функцию
-		printf("2. Вывести слова, сгрупированные по количеству букв без замен\n");
-		printf("3. Вернуться в главное меню\n");
-		printf("Введите код нужной команды ");
-		printf("(любой код, кроме перечисленных, будет проигнорирован) : ");
+		printWordsMenu();
 		scanf("\n%c", &operationCode);
 		switch (operationCode)
 		{
@@ -76,6 +69,15 @@ void handleWordsPrintingMenu(cryptogram_t* data)
 		default: break;
 		}
 	} while (operationCode != DECLINE_PRINTING);
+}
+
+void printWordsMenu()
+{
+	printf("1. Вывести слова, сгрупированные по длине\n");
+	printf("2. Вывести слова, сгрупированные по количеству букв без замен\n");
+	printf("3. Вернуться в главное меню\n");
+	printf("Введите код нужной команды ");
+	printf("(любой код, кроме перечисленных, будет проигнорирован): ");
 }
 
 void getNumOfUndesiphered(cryptogram_t* data)
@@ -122,7 +124,7 @@ words_list_item_t* sortWordsByLen(words_list_item_t* firstWord)
 	return newfirstWord;
 }
 
-words_list_item_t* sortWordsByUndeciphered(words_list_item_t* firstWord) //TODO: переписать в одну функцию с ByLen
+words_list_item_t* sortWordsByUndeciphered(words_list_item_t* firstWord)
 {
 	words_list_item_t* newfirstWord = NULL;
 	while (firstWord != NULL)

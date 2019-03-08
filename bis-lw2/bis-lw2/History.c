@@ -47,7 +47,6 @@ void handleRevertMenu(cryptogram_t* data)
 void undoLastChange(cryptogram_t* data)
 {
 	(data->letter + data->historyList->tail->originalLetter - 'À')->replacedTo = NO_REPLACEMENT;
-	
 	changes_list_item_t* next = data->historyList->tail;
 	data->historyList->tail = data->historyList->tail->prev;
 }
