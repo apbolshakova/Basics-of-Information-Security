@@ -47,7 +47,9 @@ int main(void)
 	}
 	else handleMainCycle(data);
 
-	changes_list_item_t* prev = NULL;
+
+
+	words_list_item_t* prev = NULL;
 	while (data->wordListHead->next) {
 		prev = data->wordListHead;
 		data->wordListHead = data->wordListHead->next;
@@ -55,35 +57,19 @@ int main(void)
 	}
 	free(data->wordListHead);
 
-	//TODO: вынести в функции
-	/*changes_list_item_t* changesItem = data->lastChange->head;
-	changes_list_item_t* nextChangesItem = NULL;
-	while (changesItem)
+	changes_list_item_t *item = data->historyList->head;
+	changes_list_item_t *nextItem = NULL;
+	while (item) 
 	{
-		nextChangesItem = changesItem->next;
-		free(changesItem);
-		changesItem = nextChangesItem;
+		nextItem = item->next;
+		free(item);
+		item = nextItem;
 	}
-	free(data->lastChange);
-	data->lastChange = NULL;
-
-
-	word_list_item_t* wordsItem = data->words->firstWord;
-	word_list_item_t* nextWordsItem = NULL;
-	while (wordsItem)
-	{
-		nextWordsItem = wordsItem->nextWord;
-		free(wordsItem);
-		wordsItem = nextWordsItem;
-	}
-	free(data->words);
-	data->words = NULL;*/
+	free(data->historyList);
+	(data->historyList) = NULL;
 
 	data->text = NULL;
 	free(data->text);
-
-	data->lastChange = NULL;
-	free(data->lastChange);
 
 	data->letter = NULL;
 	free(data->letter);

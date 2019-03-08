@@ -1,26 +1,26 @@
 #include "Header.h"
 
-changes_list_item_t* initChangesList()
+changes_list_t* initHistoryList()
 {
-	changes_list_item_t* initialItem = (changes_list_item_t*)malloc(sizeof(changes_list_item_t));
-	initialItem->head = NULL;
-	initialItem->prev = NULL;
-	initialItem->next = NULL;
-	initialItem->originalLetter = NO_REPLACEMENT;
-	initialItem->replacedTo = NO_REPLACEMENT;
-	return initialItem;
+	changes_list_t* initItem = (changes_list_t*)malloc(sizeof(changes_list_t));
+	initItem->head = NULL;
+	initItem->tail = NULL;
+	return initItem;
 }
 
 void addElementToHistory(char srcLetter, char letterForReplacement, cryptogram_t* data)
 {
 	changes_list_item_t* newItem = (changes_list_item_t*)malloc(sizeof(changes_list_item_t));
+	
 	newItem->originalLetter = srcLetter;
 	newItem->replacedTo = letterForReplacement;
+
 	newItem->next = NULL;
-	newItem->prev = data->lastChange;
-	if (data->lastChange) data->lastChange->next = newItem;
-	data->lastChange = newItem;
-	if (data->lastChange->head == NULL) data->lastChange->head = newItem;
+	newItem->prev = data->historyList->tail;
+
+	if (data->historyList->tail) data->historyList->tail->next = newItem;
+	data->historyList->tail = newItem;
+	if (data->historyList->head == NULL) data->historyList->head = newItem;
 }
 
 void handleRevertMenu(cryptogram_t* data)
@@ -30,59 +30,31 @@ void handleRevertMenu(cryptogram_t* data)
 	{
 		system("cls");
 		printf("1. Âûõîä â ãëàâíîå ìåíş\n");
-		if (data->lastChange->prev == NULL && data->lastChange->next == NULL)
+		if (data->historyList->tail != NULL)
 		{
-			printf("Èñòîğèÿ çàìåí ïóñòà.\n");
+			printf("2. Îòìåíèòü ïîñëåäíåå äåéñòâèå: ");
+			printf("çàìåíó %c íà %c\n",
+				data->historyList->tail->originalLetter, data->historyList->tail->replacedTo);
 		}
-		else
-		{
-			if (data->lastChange->prev != NULL)
-			{
-				printf("2. Îòìåíèòü ïîñëåäíåå äåéñòâèå: ");
-				printf("çàìåíó %c íà %c\n",
-					data->lastChange->originalLetter, data->lastChange->replacedTo);
-			}
-			if (data->lastChange->next != NULL)
-			{
-				printf("3. Âîññòàíîâèòü ïîñëåäíåå îòìåí¸ííîå äåéñòâèå: ");
-				printf("çàìåíó %c íà %c\n",
-					data->lastChange->next->originalLetter,
-					data->lastChange->next->replacedTo);
-			}
-		}
-
+		else printf("Èñòîğèÿ çàìåí ïóñòà.\n");
 		printf("Ââåäèòå êîä íóæíîé êîìàíäû ");
 		printf("(ëşáîé êîä, êğîìå ïåğå÷èñëåííûõ, áóäåò ïğîèãíîğèğîâàí): ");
 		scanf("\n%c", &operationCode);
-		switch (operationCode)
-		{
-		case UNDO: if (data->lastChange->prev != NULL) undoLastChange(data); break;
-		case REDO: if (data->lastChange->next != NULL) redoLastChange(data); break;
-		default: break;
-		}
+		if (operationCode == UNDO && data->historyList->tail != NULL) deleteLastChange(data);
 	} while (operationCode != DECLINE_REVERT);
 }
 
 void undoLastChange(cryptogram_t* data)
 {
-	(data->letter + data->lastChange->originalLetter - 'À')->replacedTo = NO_REPLACEMENT;
-	changes_list_item_t* oldLastChange = data->lastChange;
-	data->lastChange = data->lastChange->prev;
-	data->lastChange->next = oldLastChange;
-}
-
-void redoLastChange(cryptogram_t* data)
-{
-	changes_list_item_t* oldLastChange = data->lastChange;
-	data->lastChange = data->lastChange->next;
-	data->lastChange->prev = oldLastChange;
-	(data->letter + data->lastChange->originalLetter - 'À')->replacedTo =
-		data->lastChange->replacedTo;
+	(data->letter + data->historyList->tail->originalLetter - 'À')->replacedTo = NO_REPLACEMENT;
+	
+	changes_list_item_t* next = data->historyList->tail;
+	data->historyList->tail = data->historyList->tail->prev;
 }
 
 void deleteLastChange(cryptogram_t* data)
 {
 	undoLastChange(data);
-	data->lastChange->next = NULL;
-	free(data->lastChange->next);
+	data->historyList->tail = NULL;
+	free(data->historyList->tail);
 }

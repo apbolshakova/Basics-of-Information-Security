@@ -16,7 +16,7 @@ char fixCodeForCyrillicChar(char item);
 char getCyrrilicLetterOrExitSymbol();
 
 void initLetters(letter_t* letter);
-changes_list_item_t* initChangesList();
+changes_list_t* initHistoryList();
 
 int getSizeOfText(char* text);
 void copyStringAndGetEncounters(cryptogram_t* data, char* str);
@@ -57,7 +57,6 @@ void replaceLetter(char srcLetter, char letterForReplacement, cryptogram_t* data
 void handleReplacementMenu(cryptogram_t* data);
 
 void undoLastChange(cryptogram_t* data);
-void redoLastChange(cryptogram_t* data);
 void deleteLastChange(cryptogram_t* data);
 void handleRevertMenu(cryptogram_t* data);
 

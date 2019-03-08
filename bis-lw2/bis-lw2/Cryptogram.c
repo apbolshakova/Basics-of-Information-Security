@@ -7,7 +7,7 @@ cryptogram_t* initCryptogram()
 	*(data->text) = '\0';
 	data->letter = (letter_t*)calloc(ALPHABET_SIZE, sizeof(letter_t));
 	data->numOfLetters = 0;
-	data->lastChange = initChangesList();
+	data->historyList = initHistoryList();
 	data->wordListHead = NULL;
 
 	FILE *f = fopen(DATA_PATH, "r");
