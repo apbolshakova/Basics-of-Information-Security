@@ -46,35 +46,6 @@ int main(void)
 		_getch();
 	}
 	else handleMainCycle(data);
-
-
-
-	words_list_item_t* prev = NULL;
-	while (data->wordListHead->next) {
-		prev = data->wordListHead;
-		data->wordListHead = data->wordListHead->next;
-		free(prev);
-	}
-	free(data->wordListHead);
-
-	changes_list_item_t *item = data->historyList->head;
-	changes_list_item_t *nextItem = NULL;
-	while (item) 
-	{
-		nextItem = item->next;
-		free(item);
-		item = nextItem;
-	}
-	free(data->historyList);
-	(data->historyList) = NULL;
-
-	data->text = NULL;
-	free(data->text);
-
-	data->letter = NULL;
-	free(data->letter);
-
-	data = NULL;
-	free(data);
+	cleanMemory(data);
 	return 0;
 }

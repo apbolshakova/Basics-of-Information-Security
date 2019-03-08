@@ -65,3 +65,7 @@ void handleAutoreplacement(cryptogram_t* data);
 
 void printMainMenu();
 void handleMainCycle(cryptogram_t* data);
+
+void cleanWordsList(cryptogram_t* data);
+void cleanHistoryList(cryptogram_t* data);
+void cleanMemory(cryptogram_t* data);

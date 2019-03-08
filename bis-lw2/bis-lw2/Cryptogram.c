@@ -66,3 +66,18 @@ void printText(cryptogram_t* data)
 	}
 	printf("\n\n");
 }
+
+void cleanMemory(cryptogram_t* data)
+{
+	cleanWordsList(data);
+	cleanHistoryList(data);
+
+	data->text = NULL;
+	free(data->text);
+
+	data->letter = NULL;
+	free(data->letter);
+
+	data = NULL;
+	free(data);
+}

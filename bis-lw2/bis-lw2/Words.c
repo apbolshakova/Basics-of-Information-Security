@@ -192,48 +192,13 @@ void printCharsWithEncryption(char* ptr, cryptogram_t* data)
 	printf("\n");
 }
 
-/*
-TODO: использовать эти функции для объединения ф-ии сортировки в одну
-
-void insertByLen(words_list_item_t** newFirstWord, words_list_item_t** itemToInsert)
+void cleanWordsList(cryptogram_t* data)
 {
-	if (*newFirstWord == NULL ||
-		(*itemToInsert)->numOfUndecipheredLetters < (*newFirstWord)->numOfUndecipheredLetters)
-	{
-		(*itemToInsert)->nextWord = *newFirstWord;
-		*newFirstWord = *itemToInsert;
+	words_list_item_t* prev = NULL;
+	while (data->wordListHead->next) {
+		prev = data->wordListHead;
+		data->wordListHead = data->wordListHead->next;
+		free(prev);
 	}
-	else
-	{
-		words_list_item_t** currentToCompareWith = *newFirstWord;
-		while (currentToCompareWith != NULL &&
-				  !((*itemToInsert)->numOfUndecipheredLetters <
-				  (*currentToCompareWith)->numOfUndecipheredLetters))
-		{
-			*currentToCompareWith = (*currentToCompareWith)->nextWord;
-		}
-		(*itemToInsert)->nextWord = (*currentToCompareWith)->nextWord;
-		(*currentToCompareWith)->nextWord = *itemToInsert;
-	}
+	free(data->wordListHead);
 }
-
-void insertByUndeciphered(words_list_item_t** newFirstWord, words_list_item_t* item)
-{
-	if (*newFirstWord == NULL || item->len < (*newFirstWord)->len)
-	{
-		item->nextWord = *newFirstWord;
-		*newFirstWord = item;
-	}
-	else
-	{
-		words_list_item_t* current = *newFirstWord;
-		while (current->nextWord != NULL && !(item->len < current->nextWord->len))
-		{
-			current = current->nextWord;
-		}
-		item->nextWord = current->nextWord;
-		current->nextWord = item;
-	}
-}
-
-*/

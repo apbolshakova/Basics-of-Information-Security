@@ -58,3 +58,17 @@ void deleteLastChange(cryptogram_t* data)
 	data->historyList->tail = NULL;
 	free(data->historyList->tail);
 }
+
+void cleanHistoryList(cryptogram_t* data)
+{
+	changes_list_item_t *item = data->historyList->head;
+	changes_list_item_t *nextItem = NULL;
+	while (item)
+	{
+		nextItem = item->next;
+		free(item);
+		item = nextItem;
+	}
+	free(data->historyList);
+	(data->historyList) = NULL;
+}
