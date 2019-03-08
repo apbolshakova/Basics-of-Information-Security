@@ -15,8 +15,40 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cryptanalysis.cpp">
+    <ClCompile Include="Circs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Words.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="History.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Replacement.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Text.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LetterAnalysis.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Cryptogram.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Constants.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Types.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Header.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

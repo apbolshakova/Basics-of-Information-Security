@@ -76,6 +76,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -115,9 +116,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="cryptanalysis.cpp">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
+    <ClCompile Include="LetterAnalysis.c" />
+    <ClCompile Include="Circs.c" />
+    <ClCompile Include="History.c" />
+    <ClCompile Include="Main.c" />
+    <ClCompile Include="Replacement.c" />
+    <ClCompile Include="Text.c" />
+    <ClCompile Include="Words.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Constants.h" />
+    <ClCompile Include="Cryptogram.c">
+      <FileType>CppHeader</FileType>
     </ClCompile>
+    <ClInclude Include="Header.h" />
+    <ClInclude Include="Types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
