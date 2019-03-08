@@ -7,7 +7,8 @@ cryptogram_t* initCryptogram()
 	*(data->text) = '\0';
 	data->letter = (letter_t*)calloc(ALPHABET_SIZE, sizeof(letter_t));
 	data->numOfLetters = 0;
-	data->curChange = initChangesList();
+	data->lastChange = initChangesList();
+	data->wordListHead = NULL;
 
 	FILE *f = fopen(DATA_PATH, "r");
 	if ((f != NULL) && (fgetc(f) != EOF) && !(feof(f)))
@@ -19,7 +20,7 @@ cryptogram_t* initCryptogram()
 	if (data->numOfLetters != NO_LETTERS)
 	{
 		getFrequencies(data);
-		data->words = parseTextIntoWords(data->text);
+		parseTextIntoWords(data);
 	}
 	return data;
 }

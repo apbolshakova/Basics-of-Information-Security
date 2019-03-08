@@ -32,15 +32,15 @@ bool_t isUsedAsReplacement(char symbolToCheck, letter_t* letter)
 	return isUsed;
 }
 
-bool_t wordIsUnique(word_list_item_t* newWord, words_info_t* wordsInfo)
+bool_t wordIsUnique(words_list_item_t* newWord, words_list_item_t* head)
 {
-	word_list_item_t* item = wordsInfo->firstWord;
+	words_list_item_t* item = head;
 	bool_t isUnique = TRUE;
 	while (item != NULL && isUnique)
 	{
 		if (item->len == newWord->len &&
 			areSameWords(item->chars, newWord->chars)) isUnique = FALSE;
-		item = item->nextWord;
+		item = item->next;
 	}
 	return isUnique;
 }

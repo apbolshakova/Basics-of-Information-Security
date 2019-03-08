@@ -92,7 +92,7 @@ void replaceAndUpdateHistoryAuto(cryptogram_t* data) //TODO рефакторинг
 		}
 		else
 		{
-			deleteCurChange(data);
+			deleteLastChange(data);
 			printf("Невозможно определить следующую оптимальную замену.\n");
 			break;
 		}

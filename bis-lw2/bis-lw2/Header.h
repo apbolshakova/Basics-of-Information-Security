@@ -10,7 +10,7 @@ bool_t isLowercaseLetter(char item);
 bool_t isLetter(char item);
 bool_t isUsedAsReplacement(char symbolToCheck, letter_t* letter);
 bool_t areSameWords(char* a, char* b);
-bool_t wordIsUnique(word_list_item_t* newWord, words_info_t* wordsInfo);
+bool_t wordIsUnique(words_list_item_t* newWord, words_list_item_t* list);
 
 char fixCodeForCyrillicChar(char item);
 char getCyrrilicLetterOrExitSymbol();
@@ -24,9 +24,9 @@ void handleDataFromString(cryptogram_t* data, char* str);
 void initTextAndGetEncounters(cryptogram_t* data, FILE* f);
 void getFrequencies(cryptogram_t* data);
 
-void addWordToList(word_list_item_t* newWord, words_info_t* wordsInfo);
-char* handleWord(words_info_t* wordsInfo, char* text);
-words_info_t* parseTextIntoWords(char* text);
+void handleWordData(words_list_item_t* newWord, cryptogram_t* data);
+void addWordToList(cryptogram_t* data);
+void parseTextIntoWords(cryptogram_t* data);
 
 cryptogram_t* initCryptogram();
 
@@ -42,8 +42,8 @@ void suggestReplacement(cryptogram_t* data);
 
 void getNumOfUndesiphered(cryptogram_t* data);
 
-word_list_item_t* sortWordsByLen(word_list_item_t* firstWord);
-word_list_item_t* sortWordsByUndeciphered(word_list_item_t* firstWord);
+words_list_item_t* sortWordsByLen(words_list_item_t* firstWord);
+words_list_item_t* sortWordsByUndeciphered(words_list_item_t* firstWord);
 
 void printCharsWithEncryption(char* ptr, cryptogram_t* data);
 void printWords(printing_operation_code_t order, cryptogram_t* data);
@@ -56,9 +56,9 @@ void addElementToHistory(char srcLetter, char letterForReplacement, cryptogram_t
 void replaceLetter(char srcLetter, char letterForReplacement, cryptogram_t* data);
 void handleReplacementMenu(cryptogram_t* data);
 
-void undoCurChange(cryptogram_t* data);
-void redoCurChange(cryptogram_t* data);
-void deleteCurChange(cryptogram_t* data);
+void undoLastChange(cryptogram_t* data);
+void redoLastChange(cryptogram_t* data);
+void deleteLastChange(cryptogram_t* data);
 void handleRevertMenu(cryptogram_t* data);
 
 void replaceAndUpdateHistoryAuto(cryptogram_t* data);

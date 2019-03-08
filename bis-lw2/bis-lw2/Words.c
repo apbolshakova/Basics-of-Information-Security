@@ -1,60 +1,53 @@
 #include "Header.h"
 
-words_info_t* parseTextIntoWords(char* text)
+void parseTextIntoWords(cryptogram_t* data)
 {
-	char* sav = text;
-	words_info_t* wordsInfo = (words_info_t*)malloc(sizeof(words_info_t));
-	wordsInfo->firstWord = NULL;
-	wordsInfo->lastWord = NULL;
-	while (*text)
+	char* sav = data->text;
+	while (*data->text && !isLetter(*data->text)) data->text++;
+	if (isLetter(*data->text)) addWordToList(data);
+	while (*data->text)
 	{
-		while (*text && !isLetter(*text)) text++;
-		if (isLetter(*text)) text = handleWord(wordsInfo, text);
+		while (*data->text && !isLetter(*data->text)) data->text++;
+		if (isLetter(*data->text))
+		{
+			addWordToList(data);
+		}
 	}
-	text = sav;
-	return wordsInfo;
+	data->text = sav;
 }
 
-char* handleWord(words_info_t* wordsInfo, char* text) //TODO: рефакторинг
+void addWordToList(cryptogram_t* data)
 {
-	char* textSav = text;
-	word_list_item_t* newWord = (word_list_item_t*)malloc(sizeof(word_list_item_t));
+	words_list_item_t* newWord = (words_list_item_t*)malloc(sizeof(words_list_item_t));
+	handleWordData(newWord, data);
+	if (wordIsUnique(newWord, data->wordListHead))
+	{
+		newWord->next = data->wordListHead;
+		data->wordListHead = newWord;
+	}
+}
+
+void handleWordData(words_list_item_t* newWord, cryptogram_t* data)
+{
+	char* textSav = data->text;
 	newWord->len = 0;
 	newWord->numOfUndecipheredLetters = 0;
-	while (isLetter(*text))
+	while (isLetter(*data->text))
 	{
 		newWord->len++;
-		text++;
+		data->text++;
 	}
 	newWord->chars = (char*)malloc(newWord->len * sizeof(char) + 1);
-
-	text = textSav;
+	data->text = textSav;
 	char* charsSav = newWord->chars;
-	while (isLetter(*text))
+	while (isLetter(*data->text))
 	{
-		*(newWord->chars) = *text;
-		text++;
+		*(newWord->chars) = *data->text;
+		data->text++;
 		newWord->chars++;
 	}
 	*(newWord->chars) = '\0';
 	newWord->chars = charsSav;
-	if (wordIsUnique(newWord, wordsInfo)) addWordToList(newWord, wordsInfo);
-	return text;
-}
-
-void addWordToList(word_list_item_t* newWord, words_info_t* wordsInfo)
-{
-	if (wordsInfo->lastWord == NULL) //список пуст
-	{
-		wordsInfo->firstWord = newWord;
-		wordsInfo->lastWord = wordsInfo->firstWord;
-	}
-	else
-	{
-		wordsInfo->lastWord->nextWord = newWord;
-		wordsInfo->lastWord = newWord;
-	}
-	wordsInfo->lastWord->nextWord = NULL;
 }
 
 void handleWordsPrintingMenu(cryptogram_t* data)
@@ -72,12 +65,12 @@ void handleWordsPrintingMenu(cryptogram_t* data)
 		switch (operationCode)
 		{
 		case BY_LENGTH: 
-			data->words->firstWord = sortWordsByLen(data->words->firstWord);
+			data->wordListHead = sortWordsByLen(data->wordListHead);
 			printWords(BY_LENGTH, data); 
 			break; //длины подсчитаны при инициализации
 		case BY_UNDECIPHERED: 
 			getNumOfUndesiphered(data);
-			data->words->firstWord = sortWordsByUndeciphered(data->words->firstWord);
+			data->wordListHead = sortWordsByUndeciphered(data->wordListHead);
 			printWords(BY_UNDECIPHERED, data);
 			break;
 		default: break;
@@ -87,7 +80,7 @@ void handleWordsPrintingMenu(cryptogram_t* data)
 
 void getNumOfUndesiphered(cryptogram_t* data)
 {
-	word_list_item_t* word = data->words->firstWord;
+	words_list_item_t* word = data->wordListHead;
 	while (word != NULL)
 	{
 		word->numOfUndecipheredLetters = 0;
@@ -98,61 +91,61 @@ void getNumOfUndesiphered(cryptogram_t* data)
 				word->numOfUndecipheredLetters++;
 			curLetter++;
 		}
-		word = word->nextWord;
+		word = word->next;
 	}
 }
 
-word_list_item_t* sortWordsByLen(word_list_item_t* firstWord)
+words_list_item_t* sortWordsByLen(words_list_item_t* firstWord)
 {
-	word_list_item_t* newfirstWord = NULL;
+	words_list_item_t* newfirstWord = NULL;
 	while (firstWord != NULL)
 	{
-		word_list_item_t* item = firstWord;
-		firstWord = firstWord->nextWord;
+		words_list_item_t* item = firstWord;
+		firstWord = firstWord->next;
 
 		if (newfirstWord == NULL || item->len < newfirstWord->len)
 		{
-			item->nextWord = newfirstWord;
+			item->next = newfirstWord;
 			newfirstWord = item;
 		}
 		else
 		{
-			word_list_item_t* current = newfirstWord;
-			while (current->nextWord != NULL && !(item->len < current->nextWord->len))
+			words_list_item_t* current = newfirstWord;
+			while (current->next != NULL && !(item->len < current->next->len))
 			{
-				current = current->nextWord;
+				current = current->next;
 			}
-			item->nextWord = current->nextWord;
-			current->nextWord = item;
+			item->next = current->next;
+			current->next = item;
 		}
 	}
 	return newfirstWord;
 }
 
-word_list_item_t* sortWordsByUndeciphered(word_list_item_t* firstWord) //TODO: переписать в одну функцию с ByLen
+words_list_item_t* sortWordsByUndeciphered(words_list_item_t* firstWord) //TODO: переписать в одну функцию с ByLen
 {
-	word_list_item_t* newfirstWord = NULL;
+	words_list_item_t* newfirstWord = NULL;
 	while (firstWord != NULL)
 	{
-		word_list_item_t* item = firstWord;
-		firstWord = firstWord->nextWord;
+		words_list_item_t* item = firstWord;
+		firstWord = firstWord->next;
 
 		if (newfirstWord == NULL ||
 			item->numOfUndecipheredLetters < newfirstWord->numOfUndecipheredLetters)
 		{
-			item->nextWord = newfirstWord;
+			item->next = newfirstWord;
 			newfirstWord = item;
 		}
 		else
 		{
-			word_list_item_t* current = newfirstWord;
-			while (current->nextWord != NULL &&
-				item->numOfUndecipheredLetters >= current->nextWord->numOfUndecipheredLetters)
+			words_list_item_t* current = newfirstWord;
+			while (current->next != NULL &&
+				item->numOfUndecipheredLetters >= current->next->numOfUndecipheredLetters)
 			{
-				current = current->nextWord;
+				current = current->next;
 			}
-			item->nextWord = current->nextWord;
-			current->nextWord = item;
+			item->next = current->next;
+			current->next = item;
 		}
 	}
 	return newfirstWord;
@@ -162,14 +155,14 @@ void printWords(printing_operation_code_t order, cryptogram_t* data)
 {
 	system("cls");
 
-	word_list_item_t* word = data->words->firstWord;
+	words_list_item_t* word = data->wordListHead;
 	int prevValue = 0;
 	if (order == BY_LENGTH) prevValue = word->len;
 	if (order == BY_UNDECIPHERED) prevValue = word->numOfUndecipheredLetters;
 	printf("По %i:\n", prevValue);
 	printCharsWithEncryption(word->chars, data);
 
-	word = word->nextWord;
+	word = word->next;
 	while (word != NULL)
 	{
 		int nextValue = 0;
@@ -179,7 +172,7 @@ void printWords(printing_operation_code_t order, cryptogram_t* data)
 		if (nextValue != prevValue) printf("\nПо %i:\n", nextValue);
 		printCharsWithEncryption(word->chars, data);
 
-		word = word->nextWord;
+		word = word->next;
 		prevValue = nextValue;
 	}
 
@@ -202,7 +195,7 @@ void printCharsWithEncryption(char* ptr, cryptogram_t* data)
 /*
 TODO: использовать эти функции для объединения ф-ии сортировки в одну
 
-void insertByLen(word_list_item_t** newFirstWord, word_list_item_t** itemToInsert)
+void insertByLen(words_list_item_t** newFirstWord, words_list_item_t** itemToInsert)
 {
 	if (*newFirstWord == NULL ||
 		(*itemToInsert)->numOfUndecipheredLetters < (*newFirstWord)->numOfUndecipheredLetters)
@@ -212,7 +205,7 @@ void insertByLen(word_list_item_t** newFirstWord, word_list_item_t** itemToInser
 	}
 	else
 	{
-		word_list_item_t** currentToCompareWith = *newFirstWord;
+		words_list_item_t** currentToCompareWith = *newFirstWord;
 		while (currentToCompareWith != NULL &&
 				  !((*itemToInsert)->numOfUndecipheredLetters <
 				  (*currentToCompareWith)->numOfUndecipheredLetters))
@@ -224,7 +217,7 @@ void insertByLen(word_list_item_t** newFirstWord, word_list_item_t** itemToInser
 	}
 }
 
-void insertByUndeciphered(word_list_item_t** newFirstWord, word_list_item_t* item)
+void insertByUndeciphered(words_list_item_t** newFirstWord, words_list_item_t* item)
 {
 	if (*newFirstWord == NULL || item->len < (*newFirstWord)->len)
 	{
@@ -233,7 +226,7 @@ void insertByUndeciphered(word_list_item_t** newFirstWord, word_list_item_t* ite
 	}
 	else
 	{
-		word_list_item_t* current = *newFirstWord;
+		words_list_item_t* current = *newFirstWord;
 		while (current->nextWord != NULL && !(item->len < current->nextWord->len))
 		{
 			current = current->nextWord;

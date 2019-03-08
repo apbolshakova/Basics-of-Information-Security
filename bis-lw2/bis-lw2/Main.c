@@ -47,8 +47,16 @@ int main(void)
 	}
 	else handleMainCycle(data);
 
+	changes_list_item_t* prev = NULL;
+	while (data->wordListHead->next) {
+		prev = data->wordListHead;
+		data->wordListHead = data->wordListHead->next;
+		free(prev);
+	}
+	free(data->wordListHead);
+
 	//TODO: вынести в функции
-	changes_list_item_t* changesItem = data->curChange->head;
+	/*changes_list_item_t* changesItem = data->lastChange->head;
 	changes_list_item_t* nextChangesItem = NULL;
 	while (changesItem)
 	{
@@ -56,8 +64,8 @@ int main(void)
 		free(changesItem);
 		changesItem = nextChangesItem;
 	}
-	free(data->curChange);
-	data->curChange = NULL;
+	free(data->lastChange);
+	data->lastChange = NULL;
 
 
 	word_list_item_t* wordsItem = data->words->firstWord;
@@ -69,17 +77,13 @@ int main(void)
 		wordsItem = nextWordsItem;
 	}
 	free(data->words);
-	data->words = NULL;
-	
-
-	data->words = NULL;
-	free(data->words);
+	data->words = NULL;*/
 
 	data->text = NULL;
 	free(data->text);
 
-	data->curChange = NULL;
-	free(data->curChange);
+	data->lastChange = NULL;
+	free(data->lastChange);
 
 	data->letter = NULL;
 	free(data->letter);
