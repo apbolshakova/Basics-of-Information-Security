@@ -57,7 +57,6 @@ void addElementToHistory(char srcLetter, char letterForReplacement, cryptogram_t
 void replaceLetter(char srcLetter, char letterForReplacement, cryptogram_t* data);
 void handleReplacementMenu(cryptogram_t* data);
 
-void undoLastChange(cryptogram_t* data);
 void deleteLastChange(cryptogram_t* data);
 void handleRevertMenu(cryptogram_t* data);
 

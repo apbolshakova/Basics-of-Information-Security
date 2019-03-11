@@ -17,11 +17,19 @@ void addElementToHistory(char srcLetter, char letterForReplacement, cryptogram_t
 	newItem->replacedTo = letterForReplacement;
 
 	newItem->next = NULL;
-	newItem->prev = data->historyList->tail;
 
-	if (data->historyList->tail) data->historyList->tail->next = newItem;
-	data->historyList->tail = newItem;
-	if (data->historyList->head == NULL) data->historyList->head = newItem;
+	if (data->historyList->tail == NULL)
+	{
+		newItem->prev = NULL;
+		data->historyList->head = newItem;
+		data->historyList->tail = newItem;
+	}
+	else
+	{
+		newItem->prev = data->historyList->tail;
+		data->historyList->tail->next = newItem;
+		data->historyList->tail = data->historyList->tail->next;
+	}
 }
 
 void handleRevertMenu(cryptogram_t* data)
@@ -45,18 +53,17 @@ void handleRevertMenu(cryptogram_t* data)
 	} while (operationCode != DECLINE_REVERT);
 }
 
-void undoLastChange(cryptogram_t* data)
-{
-	(data->letter + data->historyList->tail->originalLetter - 'À')->replacedTo = NO_REPLACEMENT;
-	changes_list_item_t* next = data->historyList->tail;
-	data->historyList->tail = data->historyList->tail->prev;
-}
-
 void deleteLastChange(cryptogram_t* data)
 {
-	undoLastChange(data);
-	data->historyList->tail = NULL;
-	free(data->historyList->tail);
+	(data->letter + data->historyList->tail->originalLetter - 'À')->replacedTo = NO_REPLACEMENT; 
+	
+	data->historyList->tail = data->historyList->tail->prev;
+	if (data->historyList->tail == NULL) data->historyList->head = NULL;
+	else
+	{
+		data->historyList->tail->next = NULL;
+		free(data->historyList->tail->next);
+	}
 }
 
 void cleanHistoryList(cryptogram_t* data)
