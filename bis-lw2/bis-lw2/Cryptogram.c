@@ -4,8 +4,6 @@ cryptogram_t* initCryptogram()
 {
 	cryptogram_t* data = (cryptogram_t*)malloc(sizeof(cryptogram_t));
 	if (data == NULL) return NULL;
-	data->text = malloc(sizeof(char));
-	*(data->text) = '\0';
 	data->letter = (letter_t*)calloc(ALPHABET_SIZE, sizeof(letter_t));
 	if (data->letter == NULL)
 	{

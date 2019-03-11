@@ -18,7 +18,6 @@ char getCyrrilicLetterOrExitSymbol();
 void initLetters(letter_t* letter);
 changes_list_t* initHistoryList();
 
-int getSizeOfText(char* text);
 void copyStringAndGetEncounters(cryptogram_t* data, char* str);
 void handleDataFromString(cryptogram_t* data, char* str);
 long int getFileSize(FILE *f);

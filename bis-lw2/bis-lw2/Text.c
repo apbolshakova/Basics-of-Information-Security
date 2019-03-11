@@ -7,6 +7,14 @@ void initTextAndGetEncounters(cryptogram_t* data, FILE* f)
 	if (f == NULL) return;
 	long int fileSize = getFileSize(f);
 	char* temp = (char*)calloc(fileSize, sizeof(char));
+	if (temp == NULL) return NULL;
+	data->text = (char*)calloc(fileSize, sizeof(char));
+	if (data->text == NULL)
+	{
+		temp = NULL;
+		free(temp);
+		return NULL;
+	}
 	while (fgets(temp, fileSize, f) != NULL) handleDataFromString(data, temp);
 	free(temp);
 }
@@ -23,14 +31,7 @@ long int getFileSize(FILE *f)
 void handleDataFromString(cryptogram_t* data, char* str)
 {
 	char* sav = data->text;
-	int sizeOfOldText = getSizeOfText(data->text);
-
-	data->text = sav;
-	data->text = (char*)realloc(data->text,
-		(sizeOfOldText + SIZE_OF_STRING_TO_COPY) * sizeof(char) + 1);
-	sav = data->text;
-
-	data->text += sizeOfOldText;
+	while (*(data->text)) data->text++;
 	copyStringAndGetEncounters(data, str);
 	data->text = sav;
 }
