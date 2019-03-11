@@ -5,10 +5,19 @@ void initTextAndGetEncounters(cryptogram_t* data, FILE* f)
 	fclose(f);
 	f = fopen(DATA_PATH, "r");
 	if (f == NULL) return;
-	char* temp = (char*)calloc(SIZE_OF_STRING_TO_COPY, sizeof(char));
-	while (fgets(temp, SIZE_OF_STRING_TO_COPY * sizeof(char), f) != NULL)
-		handleDataFromString(data, temp);
+	long int fileSize = getFileSize(f);
+	char* temp = (char*)calloc(fileSize, sizeof(char));
+	while (fgets(temp, fileSize, f) != NULL) handleDataFromString(data, temp);
 	free(temp);
+}
+
+long int getFileSize(FILE *f)
+{
+	long int sav = ftell(f);
+	fseek(f, 0L, SEEK_END);
+	long int fileSize = ftell(f);
+	fseek(f, sav, SEEK_SET);
+	return(fileSize);
 }
 
 void handleDataFromString(cryptogram_t* data, char* str)
