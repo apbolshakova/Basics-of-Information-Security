@@ -47,8 +47,7 @@ char getCyrrilicLetterOrExitSymbol()
 	return letter;
 }
 
-//исправление считанных кодов символов, сдвиги найдены экспериментально
-char fixCodeForCyrillicChar(char item)
+char fixCodeForCyrillicChar(char item) //аналог OemToCharA
 {
 	if (-128 <= item && item <= -81) return item + 64;
 	if (-32 <= item && item <= -17) return item + 16;

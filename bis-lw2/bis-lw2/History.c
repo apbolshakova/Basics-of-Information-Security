@@ -3,6 +3,7 @@
 changes_list_t* initHistoryList()
 {
 	changes_list_t* initItem = (changes_list_t*)malloc(sizeof(changes_list_t));
+	if (initItem == NULL) return NULL;
 	initItem->head = NULL;
 	initItem->tail = NULL;
 	return initItem;
@@ -11,7 +12,7 @@ changes_list_t* initHistoryList()
 void addElementToHistory(char srcLetter, char letterForReplacement, cryptogram_t* data)
 {
 	changes_list_item_t* newItem = (changes_list_item_t*)malloc(sizeof(changes_list_item_t));
-	
+	if (newItem == NULL) return;
 	newItem->originalLetter = srcLetter;
 	newItem->replacedTo = letterForReplacement;
 

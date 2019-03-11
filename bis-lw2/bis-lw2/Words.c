@@ -16,6 +16,7 @@ void parseTextIntoWords(cryptogram_t* data)
 void addWordToList(cryptogram_t* data)
 {
 	words_list_item_t* newWord = (words_list_item_t*)malloc(sizeof(words_list_item_t));
+	if (newWord == NULL) return NULL;
 	handleWordData(newWord, data);
 	if (wordIsUnique(newWord, data->wordListHead))
 	{
@@ -59,8 +60,8 @@ void handleWordsMenu(cryptogram_t* data)
 		{
 		case BY_LENGTH: 
 			data->wordListHead = sortWordsByLen(data->wordListHead);
-			printWords(BY_LENGTH, data); 
-			break; //длины подсчитаны при инициализации
+			printWords(BY_LENGTH, data); //длины подсчитаны при инициализации
+			break; 
 		case BY_UNDECIPHERED: 
 			getNumOfUndesiphered(data);
 			data->wordListHead = sortWordsByUndeciphered(data->wordListHead);

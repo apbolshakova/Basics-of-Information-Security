@@ -4,6 +4,7 @@ void initTextAndGetEncounters(cryptogram_t* data, FILE* f)
 {
 	fclose(f);
 	f = fopen(DATA_PATH, "r");
+	if (f == NULL) return;
 	char* temp = (char*)calloc(SIZE_OF_STRING_TO_COPY, sizeof(char));
 	while (fgets(temp, SIZE_OF_STRING_TO_COPY * sizeof(char), f) != NULL)
 		handleDataFromString(data, temp);
