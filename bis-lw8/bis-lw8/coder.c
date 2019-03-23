@@ -16,7 +16,8 @@
 #define MIN_PACK 1
 #define MAX_PACK 7
 #define BITS_IN_BYTE 8
-#define LEN_NUMBER_SIZE 8 //количество бит для хранения длины зашифрованного текста
+#define LEN_NUMBER_SIZE 8 //количество пар бит для хранения длины зашифрованного текста
+#define PACK_SIZE 3 //количество бит для хранения степени упаковки
 
 void copyFile(FILE *ifp, FILE *ofp);
 
@@ -49,10 +50,10 @@ int main(void)
 		return 0;
 	}
 
-	//Определить количество эл-ов в изображении, где будет произведение перезапись
+	//Определить количество байтов в изображении, где будет произведение перезапись
 	fseek(srcFile, SIZE_POS_HEX, SEEK_SET);
-	int size = 0;
-	for (int i = 0; i < 4; i++) size = size + getc(srcFile) * pow(16, i); //TODO: рефакторинг
+	int bytesNum = 0;
+	for (int i = 0; i < 4; i++) bytesNum = bytesNum + getc(srcFile) * pow(16, i);
 
 	//Определить положение 1-го пикселя в изображении
 	fseek(srcFile, OFFSET_POS_HEX, SEEK_SET);
@@ -71,21 +72,21 @@ int main(void)
 	//Получить размер текста сообщения в байтах
 	fseek(textFile, 0L, SEEK_END);
 	int textSize = ftell(textFile);
-	if ((double)textSize >= pow(2, LEN_NUMBER_SIZE))
+	if ((double)textSize >= pow(2, LEN_NUMBER_SIZE * 2))
 	{
-		printf("Unable to encrypt message: too long to save it's size (max = 255 chars).\n");
+		printf("Unable to encrypt message: too long to save it's size.\n");
 		_getch();
 		return 0;
 	}
 
-	//Проверить, достаточна ли величина контейнера для записи в байтах
-	int maxMesLen = LEN_NUMBER_SIZE + size * pack; //по 1 на длину и по pack на символы
-	int mesSize = LEN_NUMBER_SIZE + textSize * BITS_IN_BYTE;
+	//Проверить, достаточно ли эл-ов в контейнере
+	int maxMesLen = bytesNum * pack; //размер сообщения + степень упаковки + символы
+	int mesSize = textSize * BITS_IN_BYTE;
 	if (mesSize > maxMesLen)
 	{
 		printf("Unable to encrypt message: image is too small.\n");
-		printf("Message must contains no more than %i chars.", (maxMesLen - LEN_NUMBER_SIZE) / BITS_IN_BYTE); 
-		printf("Current message contains %i chars.\n", (mesSize - LEN_NUMBER_SIZE) / BITS_IN_BYTE);
+		printf("Message must contains no more than %i chars.", maxMesLen / BITS_IN_BYTE); 
+		printf("Current message contains %i chars.\n", mesSize / BITS_IN_BYTE);
 		_getch();
 		return 0;
 	}
@@ -101,36 +102,52 @@ int main(void)
 	fseek(srcFile, 0L, SEEK_SET);
 	copyFile(srcFile, destFile);
 
-	//Зашифровать сообщение и его длину
+	//Зашифровать длину сообщения в первых 8 байтах (по 2 мл. разряда в каждом)
 	fseek(destFile, offset, SEEK_SET);
 	fseek(textFile, 0L, SEEK_SET);
 
-	//в 8 первых байт вне зависимости от размера упаковки пишем размер
 	for (int i = 0; i < LEN_NUMBER_SIZE; i++)
 	{
 		char destCh = 0;
 		fscanf(destFile, "%c", &destCh);
 
-		if (textSize & (1 << 0)) destCh |= (1 << i);
-		else destCh &= ~(1 << i);
-		textSize = textSize >> 1;
-
+		for (int j = 0; j < 2; j++)
+		{
+			if (textSize & (1 << 0)) destCh |= (1 << i);
+			else destCh &= ~(1 << i);
+			textSize = textSize >> 1;
+		}
 		fseek(destFile, -1L, SEEK_CUR);
 		fprintf(destFile, "%x", destCh);
 		fseek(destFile, 1L, SEEK_CUR);
 	}
 
+	//Зашифровать плотность упаковки
+	int sav = pack;
+	char destCh = 0;
+	fscanf(destFile, "%c", &destCh);
+	for (int i = 0; i < PACK_SIZE; i++)
+	{
+		if (sav & (1 << 0)) destCh |= (1 << i);
+		else destCh &= ~(1 << i);
+		sav = sav >> 1;
+	}
+	fseek(destFile, -1L, SEEK_CUR);
+	fprintf(destFile, "%x", destCh);
+	fseek(destFile, 1L, SEEK_CUR);
+
+	//Зашифровать текст
 	char temp = getc(textFile);
 	while (temp != EOF) //пока есть символы для кодирования
 	{
 		char destCh = 0;
 		fscanf(destFile, "%c", &destCh);
-		for (int i = 0; i < pack; i++) 		//в (0..7 - pack) биты канала записать pack битов из потока temp (if temp) 
+		for (int i = 0; i < pack; i++) 
 		{
 			if (!temp) temp = getc(textFile);
 			if (temp == EOF) break;
-
-			if (temp & (1 << 0)) destCh |= (1 << i); //записать 1 в i-ый бит текущего символа из destFile
+			//записать 1 в i-ый бит текущего символа из destFile
+			if (temp & (1 << 0)) destCh |= (1 << i); 
 			else destCh &= ~(1 << i);
 			temp = temp >> 1;
 		}
@@ -138,7 +155,6 @@ int main(void)
 		fprintf(destFile, "%c", destCh);
 		fseek(destFile, 1L, SEEK_CUR);
 	}
-
 	_getch();
 	return 0;
 }
