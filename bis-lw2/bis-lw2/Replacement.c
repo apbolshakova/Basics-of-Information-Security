@@ -47,8 +47,11 @@ char getCyrrilicLetterOrExitSymbol()
 	return letter;
 }
 
+//#include <Windows.h>
 char fixCodeForCyrillicChar(char item) //аналог OemToCharA
 {
+	//OemToChar()
+	
 	if (-128 <= item && item <= -81) return item + 64;
 	if (-32 <= item && item <= -17) return item + 16;
 	return item;

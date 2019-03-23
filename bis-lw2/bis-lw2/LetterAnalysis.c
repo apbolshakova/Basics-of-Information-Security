@@ -4,7 +4,7 @@ void initLetters(letter_t* letter)
 {
 	for (int i = 0; i < ALPHABET_SIZE; i++)
 	{
-		(letter + i)->symbol = 'À' + i;
+		letter[i].symbol = 'À' + i;
 		(letter + i)->encounteredInSrcText = 0;
 		(letter + i)->frequencyInSrcText = 0;
 		(letter + i)->replacedTo = NO_REPLACEMENT;
