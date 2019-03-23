@@ -7,16 +7,14 @@ int encode()
 	if (srcFile == NULL)
 	{
 		printf("ERROR: unable to open source file.\n");
-		_getch();
 		return 0;
 	}
 
 	//Открыть файл-сообщение
-	FILE* textFile = fopen("text.txt", "r");
+	FILE* textFile = fopen(TEXT_FILE_PATH, "r");
 	if (textFile == NULL)
 	{
 		printf("ERROR: unable to open file with message.\n");
-		_getch();
 		return 0;
 	}
 
@@ -25,7 +23,6 @@ int encode()
 	if (getc(srcFile) != PALETTE)
 	{
 		printf("Invalid file. Suggested 24-bit bmp.");
-		_getch();
 		return 0;
 	}
 
@@ -59,7 +56,6 @@ int encode()
 	if ((double)textSize >= pow(4, LEN_NUMBER_SIZE))
 	{
 		printf("Unable to encrypt message: too long to save it's size.\n");
-		_getch();
 		return 0;
 	}
 
@@ -71,7 +67,6 @@ int encode()
 		printf("Unable to encrypt message: image is too small.\n");
 		printf("Message must contains no more than %i chars. ", maxMesLen / BITS_IN_BYTE );
 		printf("Current message contains %i chars.\n", textSize);
-		_getch();
 		return 0;
 	}
 
@@ -80,7 +75,6 @@ int encode()
 	if (destFile == NULL)
 	{
 		printf("ERROR: unable to create destination file.\n");
-		_getch();
 		return 0;
 	}
 	fseek(srcFile, 0L, SEEK_SET);
