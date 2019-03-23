@@ -54,3 +54,6 @@ dkms.conf
 
 Debug
 /bis-lw2/bis-lw2/input.txt
+/bis-lw8/bis-lw8/*.bmp
+/bis-lw8/bis-lw8/src.bmp
+/bis-lw8/bis-lw8/text.txt

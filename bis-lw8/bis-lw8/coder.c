@@ -2,6 +2,7 @@
 
 #include "stdio.h"
 #include "conio.h"
+#include "math.h"
 
 #define SRC_FILE_PATH "src.bmp"
 #define DEST_FILE_PATH "result.bmp"
@@ -16,6 +17,8 @@
 #define MAX_PACK 7
 #define BITS_IN_BYTE 8
 #define LEN_NUMBER_SIZE 8 //количество бит для хранения длины зашифрованного текста
+
+void copyFile(FILE *ifp, FILE *ofp);
 
 int main(void)
 {
@@ -48,25 +51,23 @@ int main(void)
 
 	//Определить количество эл-ов в изображении, где будет произведение перезапись
 	fseek(srcFile, SIZE_POS_HEX, SEEK_SET);
-	int size = getc(srcFile);
+	int size = 0;
+	for (int i = 0; i < 4; i++) size = size + getc(srcFile) * pow(16, i); //TODO: рефакторинг
 
 	//Получить степень сжатия
 	int pack = 0;
 	printf("Enter how many bits can be replaced for encryption (1..7): ");
 	scanf("%i", &pack);
-	while (MIN_PACK <= pack && pack <= MAX_PACK)
+	while (!(MIN_PACK <= pack && pack <= MAX_PACK))
 	{
 		printf("Invalid number: it must be from 1 to 7. Enter another one: ");
 		scanf("%i", &pack);
 	}
-
-	//Получить максимально допустимый размер сообщения
-	int maxMesLen = size * pack;
 	
-	//Получить размер  текста сообщения в байтах
+	//Получить размер текста сообщения в байтах
 	fseek(textFile, 0L, SEEK_END);
 	int textSize = ftell(textFile);
-	if (textSize >= pow(2, LEN_NUMBER_SIZE))
+	if ((double)textSize >= pow(2, LEN_NUMBER_SIZE))
 	{
 		printf("Unable to encrypt message: too long to save it's size (max = 255 chars).\n");
 		_getch();
@@ -74,15 +75,18 @@ int main(void)
 	}
 
 	//Проверить, достаточна ли величина контейнера для записи
+	int maxMesLen = size * pack;
 	int mesSize = LEN_NUMBER_SIZE + textSize * BITS_IN_BYTE;
 	if (mesSize > maxMesLen)
 	{
 		printf("Unable to encrypt message: image is too small.\n");
-		printf("Message must contains no more than %i chars.", maxMesLen - LEN_NUMBER_SIZE); 
-		printf("Current message contains %i chars.\n", mesSize - LEN_NUMBER_SIZE);
+		printf("Message must contains no more than %i chars.", (maxMesLen - LEN_NUMBER_SIZE) / BITS_IN_BYTE); 
+		printf("Current message contains %i chars.\n", (mesSize - LEN_NUMBER_SIZE) / BITS_IN_BYTE);
+		_getch();
+		return 0;
 	}
 
-	//записать сообщение
+	//Создать копию файла - изображения
 	FILE* destFile = fopen(DEST_FILE_PATH, "wb");
 	if (destFile == NULL)
 	{
@@ -90,7 +94,16 @@ int main(void)
 		_getch();
 		return 0;
 	}
-	//TODO: ф-ия создания файла с зашифрованным сообщением
+	copyFile(srcFile, destFile);
 
+	//Зашифровать сообщение и его длину
+
+	_getch();
 	return 0;
+}
+
+void copyFile(FILE *ifp, FILE *ofp)
+{
+	char c;
+	while ((c = getc(ifp)) != EOF) putc(c, ofp);
 }
