@@ -1,27 +1,6 @@
-#define _CRT_SECURE_NO_WARNINGS
+#include "Header.h"
 
-#include "stdio.h"
-#include "conio.h"
-#include "math.h"
-
-#define SRC_FILE_PATH "src.bmp"
-#define DEST_FILE_PATH "result.bmp"
-#define TEXT_FILE_PATH "text.txt"
-
-#define OFFSET_POS_HEX 0x0A //адрес отступа, начина€ с которого идут байты изображени€
-#define PALETTE_POS_HEX 0x1C //адрес палитры
-#define SIZE_POS_HEX 0x22 //адрес размера контейнера
-
-#define PALETTE 24
-#define MIN_PACK 1
-#define MAX_PACK 7
-#define BITS_IN_BYTE 8
-#define LEN_NUMBER_SIZE 8 //количество пар бит дл€ хранени€ длины зашифрованного текста
-#define PACK_SIZE 3 //количество бит дл€ хранени€ степени упаковки
-
-void copyFile(FILE *ifp, FILE *ofp);
-
-int main(void)
+int encode()
 {
 	//ќткрыть файл-изображение
 	FILE* srcFile = fopen(SRC_FILE_PATH, "rb");
@@ -50,10 +29,15 @@ int main(void)
 		return 0;
 	}
 
-	//ќпределить количество байтов в изображении, где будет произведение перезапись
+	//ќпределить количество байтов в изображении, куда можно писать текст
 	fseek(srcFile, SIZE_POS_HEX, SEEK_SET);
 	int bytesNum = 0;
-	for (int i = 0; i < 4; i++) bytesNum = bytesNum + getc(srcFile) * pow(16, i);
+	for (int i = 0; i < 4; i++)
+	{
+		char temp = getc(srcFile);
+		bytesNum = bytesNum + temp * pow(256, i);
+	}
+	bytesNum = bytesNum - LEN_NUMBER_SIZE - 1; //первые 9 байт на информацию
 
 	//ќпределить положение 1-го пиксел€ в изображении
 	fseek(srcFile, OFFSET_POS_HEX, SEEK_SET);
@@ -72,21 +56,21 @@ int main(void)
 	//ѕолучить размер текста сообщени€ в байтах
 	fseek(textFile, 0L, SEEK_END);
 	int textSize = ftell(textFile);
-	if ((double)textSize >= pow(2, LEN_NUMBER_SIZE * 2))
+	if ((double)textSize >= pow(4, LEN_NUMBER_SIZE))
 	{
 		printf("Unable to encrypt message: too long to save it's size.\n");
 		_getch();
 		return 0;
 	}
 
-	//ѕроверить, достаточно ли эл-ов в контейнере
-	int maxMesLen = bytesNum * pack; //размер сообщени€ + степень упаковки + символы
+	//ѕроверить, достаточно ли битов в контейнере
+	int maxMesLen = bytesNum * pack;
 	int mesSize = textSize * BITS_IN_BYTE;
 	if (mesSize > maxMesLen)
 	{
 		printf("Unable to encrypt message: image is too small.\n");
-		printf("Message must contains no more than %i chars.", maxMesLen / BITS_IN_BYTE); 
-		printf("Current message contains %i chars.\n", mesSize / BITS_IN_BYTE);
+		printf("Message must contains no more than %i chars. ", maxMesLen / BITS_IN_BYTE );
+		printf("Current message contains %i chars.\n", textSize);
 		_getch();
 		return 0;
 	}
@@ -101,69 +85,68 @@ int main(void)
 	}
 	fseek(srcFile, 0L, SEEK_SET);
 	copyFile(srcFile, destFile);
-
+	
 	//«ашифровать длину сообщени€ в первых 8 байтах (по 2 мл. разр€да в каждом)
 	fseek(destFile, offset, SEEK_SET);
 	fseek(textFile, 0L, SEEK_SET);
-
+	char destCh = 0;
 	for (int i = 0; i < LEN_NUMBER_SIZE; i++)
 	{
-		char destCh = 0;
-		fscanf(destFile, "%c", &destCh);
-
+		fread(&destCh, sizeof(char), 1, destFile);
+		fseek(destFile, -1L, SEEK_CUR);
 		for (int j = 0; j < 2; j++)
 		{
-			if (textSize & (1 << 0)) destCh |= (1 << i);
-			else destCh &= ~(1 << i);
+			if (textSize & (1 << 0)) destCh |= (1 << j);
+			else destCh &= ~(1 << j);
 			textSize = textSize >> 1;
 		}
-		fseek(destFile, -1L, SEEK_CUR);
-		fprintf(destFile, "%x", destCh);
-		fseek(destFile, 1L, SEEK_CUR);
+		fwrite(&destCh, sizeof(char), 1, destFile);
+		fflush(destFile);
 	}
-
+	
 	//«ашифровать плотность упаковки
 	int sav = pack;
-	char destCh = 0;
-	fscanf(destFile, "%c", &destCh);
+	fread(&destCh, sizeof(char), 1, destFile);
+	fseek(destFile, -1L, SEEK_CUR);
 	for (int i = 0; i < PACK_SIZE; i++)
 	{
 		if (sav & (1 << 0)) destCh |= (1 << i);
 		else destCh &= ~(1 << i);
 		sav = sav >> 1;
 	}
-	fseek(destFile, -1L, SEEK_CUR);
-	fprintf(destFile, "%x", destCh);
-	fseek(destFile, 1L, SEEK_CUR);
+	fwrite(&destCh, sizeof(char), 1, destFile);
+	fflush(destFile);
 
 	//«ашифровать текст
 	char temp = getc(textFile);
 	while (temp != EOF) //пока есть символы дл€ кодировани€
 	{
-		char destCh = 0;
-		fscanf(destFile, "%c", &destCh);
+		fread(&destCh, sizeof(char), 1, destFile);
+		fseek(destFile, -1L, SEEK_CUR);
 		for (int i = 0; i < pack; i++) 
 		{
 			if (!temp) temp = getc(textFile);
 			if (temp == EOF) break;
-			//записать 1 в i-ый бит текущего символа из destFile
+			//записать последний бит temp в i-ый бит байта изображени€
 			if (temp & (1 << 0)) destCh |= (1 << i); 
 			else destCh &= ~(1 << i);
 			temp = temp >> 1;
 		}
-		fseek(destFile, -1L, SEEK_CUR);
-		fprintf(destFile, "%c", destCh);
-		fseek(destFile, 1L, SEEK_CUR);
+		fwrite(&destCh, sizeof(char), 1, destFile);
+		fflush(destFile);
 	}
-	_getch();
-	return 0;
+	fclose(srcFile);
+	fclose(textFile);
+	fclose(destFile);
+	return 1;
 }
 
 void copyFile(FILE *ifp, FILE *ofp)
 {
-	char c;
-	while ((c = getc(ifp)) != EOF)
+	int chread;
+	while ((chread = fgetc(ifp)) != EOF)
 	{
-		putc(c, ofp);
+		char ch = chread;
+		putc(ch, ofp);
 	}
 }

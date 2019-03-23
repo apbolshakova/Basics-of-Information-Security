@@ -15,11 +15,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="coder.c">
+    <ClCompile Include="steganography.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="decoder.c">
+    <ClCompile Include="encode.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="decode.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
