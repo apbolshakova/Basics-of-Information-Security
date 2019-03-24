@@ -27,12 +27,12 @@ int decode()
 	int size = 0;
 	int digit = 0;
 	char destCh = 0;
-	for (int i = 0; i < LEN_NUMBER_SIZE; i++)
+	for (int i = 0; i < LEN_SIZE_BYTE; i++)
 	{
 		fread(&destCh, sizeof(char), 1, srcFile);
-		for (int j = 0; j < 2; j++)
+		for (int j = 0; j < LEN_SIZE / LEN_SIZE_BYTE; j++)
 		{
-			if (destCh & (1 << j)) size = size + pow(2, digit);
+			if (destCh & (1 << j)) size |= (1 << digit);
 			digit++;
 		}
 	}
@@ -42,9 +42,36 @@ int decode()
 	fread(&destCh, sizeof(char), 1, srcFile);
 	for (int j = 0; j < PACK_SIZE; j++)
 	{
-		if (destCh & (1 << j)) pack = pack + pow(2, j);
+		if (destCh & (1 << j)) pack |= (1 << j);
 	}
 
 	//Формировать каждый символ из 8 битов до тех пор, пока не будет прочитано длина сообщения символов
+	int numOfDecodedChars = 0;
+	int decodedBits = 0;
+	int decodingPosition = 0;
+	char decChar = 0;
+	fread(&destCh, sizeof(char), 1, srcFile);
+	while (numOfDecodedChars < size)
+	{
+		while (decodedBits < 8)
+		{
+			if (destCh & (1 << decodingPosition)) decChar |= (1 << decodedBits);
+			else decChar &= ~(1 << decodedBits);
+			decodingPosition++;
+			decodedBits++;
+
+			if (decodingPosition >= pack) 
+			{
+				fread(&destCh, sizeof(char), 1, srcFile);
+				decodingPosition = 0;
+			}
+		}
+		fwrite(&decChar, sizeof(char), 1, textFile);
+		decodedBits = 0;
+		++numOfDecodedChars;
+	}
+
+	fclose(srcFile);
+	fclose(textFile);
 	return 1;
 }

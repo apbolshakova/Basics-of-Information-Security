@@ -26,15 +26,15 @@ int encode()
 		return 0;
 	}
 
-	//Определить количество байтов в изображении, куда можно писать текст
+	//Определить количество байтов в контейнере
 	fseek(srcFile, SIZE_POS_HEX, SEEK_SET);
 	int bytesNum = 0;
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < FILE_SIZE_LEN; i++) 
 	{
 		char temp = getc(srcFile);
-		bytesNum = bytesNum + temp * pow(256, i);
+		bytesNum = bytesNum + temp * pow(BIN_BASE, BITS_IN_BYTE * i);
 	}
-	bytesNum = bytesNum - LEN_NUMBER_SIZE - 1; //первые 9 байт на информацию
+	bytesNum = bytesNum - (LEN_SIZE_BYTE + PACK_SIZE_BYTE); //первые 9 байт на информацию
 
 	//Определить положение 1-го пикселя в изображении
 	fseek(srcFile, OFFSET_POS_HEX, SEEK_SET);
@@ -53,7 +53,7 @@ int encode()
 	//Получить размер текста сообщения в байтах
 	fseek(textFile, 0L, SEEK_END);
 	int textSize = ftell(textFile);
-	if ((double)textSize >= pow(4, LEN_NUMBER_SIZE))
+	if ((double)textSize >= pow(BIN_BASE, LEN_SIZE))
 	{
 		printf("Unable to encrypt message: too long to save it's size.\n");
 		return 0;
@@ -71,28 +71,30 @@ int encode()
 	}
 
 	//Создать копию файла - изображения
-	FILE* destFile = fopen(DEST_FILE_PATH, "w+");
+	FILE* destFile = fopen(DEST_FILE_PATH, "wb+");
 	if (destFile == NULL)
 	{
 		printf("ERROR: unable to create destination file.\n");
 		return 0;
 	}
 	fseek(srcFile, 0L, SEEK_SET);
+	fseek(destFile, 0L, SEEK_SET);
 	copyFile(srcFile, destFile);
 	
 	//Зашифровать длину сообщения в первых 8 байтах (по 2 мл. разряда в каждом)
 	fseek(destFile, offset, SEEK_SET);
 	fseek(textFile, 0L, SEEK_SET);
 	char destCh = 0;
-	for (int i = 0; i < LEN_NUMBER_SIZE; i++)
+	int txtSize = textSize;
+	for (int i = 0; i < LEN_SIZE_BYTE; i++)
 	{
 		fread(&destCh, sizeof(char), 1, destFile);
 		fseek(destFile, -1L, SEEK_CUR);
-		for (int j = 0; j < 2; j++)
+		for (int j = 0; j < LEN_SIZE / LEN_SIZE_BYTE; j++)
 		{
-			if (textSize & (1 << 0)) destCh |= (1 << j);
+			if (txtSize & (1 << 0)) destCh |= (1 << j);
 			else destCh &= ~(1 << j);
-			textSize = textSize >> 1;
+			txtSize = txtSize >> 1;
 		}
 		fwrite(&destCh, sizeof(char), 1, destFile);
 		fflush(destFile);
@@ -112,22 +114,33 @@ int encode()
 	fflush(destFile);
 
 	//Зашифровать текст
-	char temp = getc(textFile);
-	while (temp != EOF) //пока есть символы для кодирования
+	char temp = fgetc(textFile);
+	fread(&destCh, sizeof(char), 1, destFile);
+	fseek(destFile, -1L, SEEK_CUR);
+	int encodedBits = 0;
+	int encodingPos = 0;
+	while (textSize) //пока есть символы для кодирования
 	{
-		fread(&destCh, sizeof(char), 1, destFile);
-		fseek(destFile, -1L, SEEK_CUR);
-		for (int i = 0; i < pack; i++) 
+		while (encodedBits < BITS_IN_BYTE)
 		{
-			if (!temp) temp = getc(textFile);
-			if (temp == EOF) break;
-			//записать последний бит temp в i-ый бит байта изображения
-			if (temp & (1 << 0)) destCh |= (1 << i); 
-			else destCh &= ~(1 << i);
+			if (temp & (1 << 0)) destCh |= (1 << encodingPos);
+			else destCh &= ~(1 << encodingPos);
 			temp = temp >> 1;
+			encodingPos++;
+			encodedBits++;
+			
+			if (encodingPos >= pack) //перейти на след. канал
+			{
+				fwrite(&destCh, sizeof(char), 1, destFile);
+				fflush(destFile);
+				fread(&destCh, sizeof(char), 1, destFile);
+				fseek(destFile, -1L, SEEK_CUR);
+				encodingPos = 0;
+			}
 		}
-		fwrite(&destCh, sizeof(char), 1, destFile);
-		fflush(destFile);
+		encodedBits = 0;
+		temp = fgetc(textFile);
+		--textSize;
 	}
 	fclose(srcFile);
 	fclose(textFile);
