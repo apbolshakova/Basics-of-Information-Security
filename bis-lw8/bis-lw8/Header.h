@@ -3,7 +3,6 @@
 #include "stdio.h"
 #include "conio.h"
 #include "math.h"
-
 #include "Constants.h"
 
 void copyFile(FILE *ifp, FILE *ofp);

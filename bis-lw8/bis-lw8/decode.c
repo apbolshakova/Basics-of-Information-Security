@@ -45,7 +45,7 @@ int decode()
 		if (destCh & (1 << j)) pack |= (1 << j);
 	}
 
-	//Формировать каждый символ из 8 битов до тех пор, пока не будет прочитано длина сообщения символов
+	//Формировать каждый символ из 8 битов
 	int numOfDecodedChars = 0;
 	int decodedBits = 0;
 	int decodingPosition = 0;
