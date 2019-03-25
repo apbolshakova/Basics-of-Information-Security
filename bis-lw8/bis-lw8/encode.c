@@ -31,7 +31,7 @@ int encode()
 	int bytesNum = 0;
 	for (int i = 0; i < FILE_SIZE_LEN; i++) 
 	{
-		char temp = getc(srcFile);
+		int temp = getc(srcFile);
 		bytesNum = bytesNum + temp * pow(BIN_BASE, BITS_IN_BYTE * i);
 	}
 	bytesNum = bytesNum - (LEN_SIZE_BYTE + PACK_SIZE_BYTE); //первые 9 байт на информацию
@@ -79,7 +79,7 @@ int encode()
 	}
 	fseek(srcFile, 0L, SEEK_SET);
 	fseek(destFile, 0L, SEEK_SET);
-	copyFile(srcFile, destFile);
+	CopyFile(SRC_FILE_PATH, DEST_FILE_PATH,FALSE);
 	
 	//Зашифровать длину сообщения в первых 8 байтах (по 2 мл. разряда в каждом)
 	fseek(destFile, offset, SEEK_SET);
@@ -146,14 +146,4 @@ int encode()
 	fclose(textFile);
 	fclose(destFile);
 	return 1;
-}
-
-void copyFile(FILE *ifp, FILE *ofp)
-{
-	int chread;
-	while ((chread = fgetc(ifp)) != EOF)
-	{
-		char ch = chread;
-		putc(ch, ofp);
-	}
 }

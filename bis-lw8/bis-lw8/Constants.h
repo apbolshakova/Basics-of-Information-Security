@@ -1,3 +1,4 @@
+#ifndef BIN_BASE
 #define SRC_FILE_PATH "src.bmp"
 #define DEST_FILE_PATH "result.bmp"
 #define TEXT_FILE_PATH "text.txt"
@@ -18,3 +19,4 @@
 #define PACK_SIZE_BYTE 1 //количество байт, в которые записывается степень упаковки
 #define MIN_PACK 1
 #define MAX_PACK 7
+#endif

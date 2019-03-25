@@ -117,7 +117,7 @@
   <ItemGroup>
     <ClCompile Include="encode.c" />
     <ClCompile Include="decode.c" />
-    <ClCompile Include="steganography.c" />
+    <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Constants.h" />

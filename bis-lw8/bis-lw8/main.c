@@ -1,6 +1,6 @@
 int main(void)
 {
-	if (!encode()) printf("Encoding error.\n");
+    if (!encode()) printf("Encoding error.\n");
 	else
 	{
         printf("Successfully encoded.\n");

@@ -53,7 +53,7 @@ int decode()
 	fread(&destCh, sizeof(char), 1, srcFile);
 	while (numOfDecodedChars < size)
 	{
-		while (decodedBits < 8)
+		while (decodedBits < BITS_IN_BYTE)
 		{
 			if (destCh & (1 << decodingPosition)) decChar |= (1 << decodedBits);
 			else decChar &= ~(1 << decodedBits);
