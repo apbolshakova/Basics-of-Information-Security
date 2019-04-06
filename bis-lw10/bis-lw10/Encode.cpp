@@ -43,20 +43,38 @@ void handleEncoding()
 	printf("Successfully encoded.\n");
 }
 
-func_res_t encode(FILE* srcFile, FILE* resFile, size_t dataBitsNum)
+func_res_t encode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 {
 	size_t parityBitsNum = getParityBitsNum(dataBitsNum);
+	size_t blockSizeInBytes = ceil((double)(dataBitsNum + parityBitsNum) / 8);
+
+	size_t textSize = getTextSizeInBits(srcFile);
+	size_t blocksNum = ceil((double)textSize / dataBitsNum);
+	for (int i = 0; i < blocksNum; i++)
+	{
+		int encodedBlock = encodeBlock(srcFile, dataBitsNum, parityBitsNum);
+		fwrite(&encodedBlock, blockSizeInBytes, 1, destFile);
+	}
 	return SUCCESS;
 }
 
 size_t getParityBitsNum(size_t dataBitsNum)
 {
-	size_t result = log2(dataBitsNum);
-	if (!isPowerOfTwo(dataBitsNum)) result++;
-	return result;
+	return (size_t)ceil(log2(dataBitsNum));
 }
 
 BOOL isPowerOfTwo(int n)
 {
 	return (n > 0 && (n & (n - 1)) == 0);
+}
+
+size_t getTextSizeInBits(FILE* srcFile)
+{
+	fseek(srcFile, 0L, SEEK_END);
+	return ftell(srcFile) * BITS_IN_BYTE;
+}
+
+int encodeBlock(FILE* srcFile, size_t dataBitsNum, size_t parityBitsNum)
+{
+	//TODO: получать закодированный блок двоичного кода длиной dataBitsNum + parityBitsNum бит
 }
