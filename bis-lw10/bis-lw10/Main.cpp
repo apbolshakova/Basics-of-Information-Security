@@ -10,8 +10,8 @@ int main(void)
 		scanf("%i", &operationCode);
 		switch (operationCode)
 		{
-		case 1: encode(); break;
-		case 2: decode(); break;
+		case 1: handleEncoding(); break;
+		case 2: handleDecoding(); break;
 		default: break;
 		}
 		printf("Press enter to continue.\n");

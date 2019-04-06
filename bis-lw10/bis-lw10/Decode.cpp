@@ -1,6 +1,6 @@
 #include "Header.h"
 
-void decode()
+void handleDecoding()
 {
 	//TODO
 }

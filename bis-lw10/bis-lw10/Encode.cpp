@@ -1,6 +1,6 @@
 #include "Header.h"
 
-void encode()
+void handleEncoding()
 {
 	//открыть файл с сообщением
 	FILE* srcFile = fopen(FILE_NAME, "rb");
@@ -18,16 +18,20 @@ void encode()
 		return;
 	}
 
-	int blockSize = 0;
-	printf("Enter size of information blocks to process: ");
-	scanf("%i", &blockSize);
-	while (blockSize < MIN_BLOCK_SIZE || blockSize > MAX_BLOCK_SIZE || blockSize % VALID_SIZE_DIVIDER)
+	size_t dataBitsNum = 0;
+	printf("Enter number of bits to process at one time: ");
+	scanf("%i", &dataBitsNum);
+	while (dataBitsNum < MIN_BLOCK_SIZE || dataBitsNum > MAX_BLOCK_SIZE || dataBitsNum % VALID_SIZE_DIVIDER)
 	{
 		printf("Incorrect block size. You must enter one of these - 8, 12, 16, 24, 32, 48, 64: ");
-		scanf("%i", &blockSize);
+		scanf("%i", &dataBitsNum);
 	}
 
-	//TODO: encoding in tempFile
+	if (encode(srcFile, tempFile, dataBitsNum) == FAIL)
+	{
+		printf("ERROR: unable to encode message.\n");
+		return;
+	};
 
 	//удалить исходный файл с сообщением и переименовать temp
 	if (!remove(FILE_NAME) || !rename(TEMP_FILE_NAME, FILE_NAME))
@@ -37,4 +41,22 @@ void encode()
 		return;
 	}
 	printf("Successfully encoded.\n");
+}
+
+func_res_t encode(FILE* srcFile, FILE* resFile, size_t dataBitsNum)
+{
+	size_t parityBitsNum = getParityBitsNum(dataBitsNum);
+	return SUCCESS;
+}
+
+size_t getParityBitsNum(size_t dataBitsNum)
+{
+	size_t result = log2(dataBitsNum);
+	if (!isPowerOfTwo(dataBitsNum)) result++;
+	return result;
+}
+
+BOOL isPowerOfTwo(int n)
+{
+	return (n > 0 && (n & (n - 1)) == 0);
 }
