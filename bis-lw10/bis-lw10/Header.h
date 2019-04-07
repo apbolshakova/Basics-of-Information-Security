@@ -8,9 +8,13 @@
 
 typedef enum FuncRes_ { FAIL, SUCCESS } func_res_t;
 
-int encodeBlock(FILE* srcFile, size_t dataBitsNum, size_t parityBitsNum);
+int pow2(int num);
+void toggleParityBits(int* blockWithParityBits, size_t num);
+void handleBit(int* dest, size_t posInDest, char src, size_t posInSrc);
+int encodeBlock(FILE* srcFile, size_t dataBitsNum, size_t parityBitsNum,
+	char* ch, size_t* posInLastCh);
 size_t getTextSizeInBits(FILE* srcFile);
-BOOL isPowerOfTwo(int n);
+BOOL isPowerOf2(int n);
 size_t getParityBitsNum(size_t blockSize);
 
 func_res_t encode(FILE* srcFile, FILE* resFile, size_t dataBitsNum);
