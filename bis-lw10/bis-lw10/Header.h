@@ -17,7 +17,7 @@ size_t getParityBitsNum(size_t blockSize);
 void printAsChars(FILE* dest, char* container, size_t size);
 
 func_res_t encode(FILE* srcFile, FILE* resFile, size_t dataBitsNum);
-func_res_t decode();
+func_res_t decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum);
 
 void handleEncoding();
 void handleDecoding();
