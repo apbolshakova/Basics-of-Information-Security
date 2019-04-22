@@ -10,11 +10,11 @@ void handleEncoding()
 		return;
 	}
 
-	//Создать временный файл
-	FILE* tempFile = fopen(ENCODED_NAME, "wb");
-	if (tempFile == NULL)
+	//Создать файл для результата
+	FILE* destFile = fopen(ENCODED_NAME, "wb");
+	if (destFile == NULL)
 	{
-		printf("ERROR: unable to create temp file.\n");
+		printf("ERROR: unable to create dest file.\n");
 		return;
 	}
 
@@ -29,7 +29,7 @@ void handleEncoding()
 	}
 
 	//Закодировать
-	if (encode(srcFile, tempFile, dataBitsNum) == FAIL)
+	if (encode(srcFile, destFile, dataBitsNum) == FAIL)
 	{
 		printf("ERROR: unable to encode message.\n");
 		return;

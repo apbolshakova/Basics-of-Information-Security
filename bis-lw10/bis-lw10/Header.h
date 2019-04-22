@@ -12,7 +12,6 @@ int getNOD(int n1, int n2);
 int getNOK(int n1, int n2);
 int pow2(int num);
 void toggleParityBits(char* block, size_t num);
-//size_t getTextSizeInBits(FILE* srcFile);
 BOOL isPowerOf2(int n);
 size_t getParityBitsNum(size_t blockSize);
 void printAsChars(FILE* dest, char* container, size_t size);
