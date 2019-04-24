@@ -55,7 +55,7 @@ func_res_t encode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 		char block[MAX_ENCODED_BLOCK] = { 0 };
 		while (posInContainer < containerSize)
 		{
-			if (!isPowerOf2(posInBlock) && !dataEnded)
+			if ((!isPowerOf2(posInBlock) && !dataEnded) || (posInBlock == blockSize))
 			{
 				if (curCh % 2)
 				{
