@@ -6,8 +6,6 @@
 #include <math.h>
 #include "Constants.h"
 
-typedef enum FuncRes_ { FAIL, SUCCESS } func_res_t;
-
 int getNOD(int n1, int n2);
 int getNOK(int n1, int n2);
 int pow2(int num);
@@ -16,8 +14,8 @@ BOOL isPowerOf2(int n);
 size_t getParityBitsNum(size_t blockSize);
 void printAsChars(FILE* dest, char* container, size_t size);
 
-func_res_t encode(FILE* srcFile, FILE* resFile, size_t dataBitsNum);
-func_res_t decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum);
+void encode(FILE* srcFile, FILE* resFile, size_t dataBitsNum);
+void decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum);
 
 void handleEncoding();
 void handleDecoding();

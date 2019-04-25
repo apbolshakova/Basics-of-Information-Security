@@ -27,17 +27,11 @@ void handleEncoding()
 		printf("Incorrect block size. You must enter one of these - 8, 12, 16, 24, 32, 48, 64: ");
 		scanf("%i", &dataBitsNum);
 	}
-
-	//Закодировать
-	if (encode(srcFile, destFile, dataBitsNum) == FAIL)
-	{
-		printf("ERROR: unable to encode message.\n");
-		return;
-	};
+	encode(srcFile, destFile, dataBitsNum);
 	printf("Successfully encoded.\n");
 }
 
-func_res_t encode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
+void encode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 {
 	size_t parityBitsNum = getParityBitsNum(dataBitsNum);
 	size_t blockSize = dataBitsNum + parityBitsNum;
@@ -85,7 +79,6 @@ func_res_t encode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 		posInContainer = 0;
 		printAsChars(destFile, container, containerSize);
 	}
-	return SUCCESS;
 }
 
 void printAsChars(FILE* dest, char* container, size_t size)

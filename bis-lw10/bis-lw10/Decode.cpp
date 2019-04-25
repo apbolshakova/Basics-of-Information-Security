@@ -28,23 +28,74 @@ void handleDecoding()
 		scanf("%i", &dataBitsNum);
 	}
 
-	//Закодировать
-	if (decode(srcFile, destFile, dataBitsNum) == FAIL)
-	{
-		printf("ERROR: unable to encode message.\n");
-		return;
-	};
-	printf("Successfully encoded.\n");
+	decode(srcFile, destFile, dataBitsNum);
+	printf("Successfully decoded.\n");
 }
 
-func_res_t decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
+void decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 {
 	size_t parityBitsNum = getParityBitsNum(dataBitsNum);
 	size_t blockSize = dataBitsNum + parityBitsNum;
 	size_t containerSize = getNOK(blockSize, BITS_IN_BYTE); //НОК размера блока и 8
 
-	//Сформировать контейнер - битовую строку
-	//Проверить контрольные биты и исправить ошибки
-	//Составить исходное сообщение из битов со значащей информацией, напечатать в dest
-	return SUCCESS;
+	BOOL dataEnded = FALSE;
+	char curCh = getc(srcFile);
+	size_t posInContainer = 0; //0..containerSize - 1
+	size_t posInCh = 0; //0..BITS_IN_BYTE - 1
+
+	while (!dataEnded)
+	{
+		//Сформировать контейнер
+		char container[MAX_CONTAINER] = { 0 };
+		while (posInContainer < containerSize)
+		{
+			container[posInContainer] = '0';
+			if (!dataEnded)
+			{
+				if (curCh % 2) container[posInContainer] = '1';
+				curCh >>= 1;
+				posInCh++;
+			}
+			if (posInCh == BITS_IN_BYTE)
+			{
+				if ((curCh = getc(srcFile)) == EOF) dataEnded = TRUE;
+				posInCh = 0;
+			}
+			posInContainer++;
+		}
+
+		//Проверить блоки данных в контейнере
+		for (int i = 0; i < containerSize / blockSize; i++) //цикл по каждому блоку
+		{
+			//Выделить блок
+			size_t posInBlock = 1; //1..blockSize
+			char* block = (char*)malloc(blockSize + 2); //+1 для сдвига и +1 для \0
+			block[0] = '0';
+			strncpy(block + 1, container, blockSize);
+
+			//Получить строку с контрольными битами для проверки
+			char* awaitedParityBits = (char*)malloc(blockSize + 2);
+			for (int k = 0; k < blockSize + 1; k++) awaitedParityBits[k] = '0';
+			awaitedParityBits[blockSize + 1] = '\0';
+			while (posInBlock <= blockSize)
+			{
+				if ((!isPowerOf2(posInBlock) && block[posInBlock] == '1'))
+					toggleParityBits(awaitedParityBits, posInBlock);
+				posInBlock++;
+			}
+
+			//Получить номер бита, для которого не совпадают контрольные и исправить
+			int corruptedBit = 0;
+			for (int k = 1; k <= parityBitsNum; k++)
+			{
+				if (block[pow2(k)] != awaitedParityBits[pow2(k)])
+					corruptedBit += pow2(k);
+			}
+			if (block[corruptedBit] == '0') block[corruptedBit] = '1';
+			else block[corruptedBit] = '0';
+		}
+		//Составить исходное сообщение из битов со значащей информацией, напечатать в dest
+		posInContainer = 0;
+
+	}
 }
