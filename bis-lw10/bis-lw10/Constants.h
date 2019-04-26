@@ -6,6 +6,5 @@
 #define MAX_BLOCK_SIZE 64
 #define VALID_SIZE_DIVIDER 4
 #define BITS_IN_BYTE 8
-#define MAX_CONTAINER 296 //Исходя из возможных размеров блоков данных
 #define MIN_PARITY_BITS 4
 #endif

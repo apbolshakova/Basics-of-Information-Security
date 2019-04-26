@@ -29,6 +29,8 @@ void handleEncoding()
 	}
 	encode(srcFile, destFile, dataBitsNum);
 	printf("Successfully encoded.\n");
+	fclose(srcFile);
+	fclose(destFile);
 }
 
 void encode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)

@@ -46,7 +46,7 @@ void decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 	while (!dataEnded)
 	{
 		//Сформировать контейнер
-		char container[MAX_CONTAINER] = { 0 };
+		char* container = (char*)malloc(containerSize * sizeof(char));
 		while (posInContainer < containerSize)
 		{
 			container[posInContainer] = '0';
@@ -76,17 +76,17 @@ void decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 			//Получить строку с контрольными битами для проверки
 			char* awaitedParityBits = (char*)malloc(blockSize + 2);
 			for (int k = 0; k < blockSize + 1; k++) awaitedParityBits[k] = '0';
-			awaitedParityBits[blockSize + 1] = '\0';
 			while (posInBlock <= blockSize)
 			{
-				if ((!isPowerOf2(posInBlock) && block[posInBlock] == '1'))
+				if ((!isPowerOf2(posInBlock) || posInBlock == pow2(parityBitsNum)) 
+					&& block[posInBlock] == '1')
 					toggleParityBits(awaitedParityBits, posInBlock);
 				posInBlock++;
 			}
 
 			//Получить номер бита, для которого не совпадают контрольные и исправить
 			int corruptedBit = 0;
-			for (int k = 1; k <= parityBitsNum; k++)
+			for (int k = 0; k < parityBitsNum; k++)
 			{
 				if (block[pow2(k)] != awaitedParityBits[pow2(k)])
 					corruptedBit += pow2(k);
@@ -103,7 +103,7 @@ void decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 
 void printResult(FILE* dest, char* container, size_t containerSize, size_t blockSize)
 {
-	char* result = (char*)malloc( containerSize / BITS_IN_BYTE * sizeof(char) + 1);
+	char* result = (char*)malloc(containerSize / BITS_IN_BYTE * sizeof(char) + 1);
 	char* temp = result;
 	char ch = 0;
 	size_t size = 0; //размер полученного сообщения
