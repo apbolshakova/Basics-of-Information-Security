@@ -45,11 +45,11 @@ void encode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 
 	while (!dataEnded)
 	{
-		char container[MAX_CONTAINER] = { 0 };
-		char block[MAX_ENCODED_BLOCK] = { 0 };
+		char* container = (char*)malloc(containerSize * sizeof(char));
+		char* block = (char*)malloc((blockSize + 1) * sizeof(char));
 		while (posInContainer < containerSize)
 		{
-			if ((!isPowerOf2(posInBlock) && !dataEnded) || (posInBlock == blockSize))
+			if ((!isPowerOf2(posInBlock) || posInBlock == pow2(parityBitsNum)) && !dataEnded)
 			{
 				if (curCh % 2)
 				{
@@ -66,6 +66,8 @@ void encode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 			if (posInBlock == blockSize + 1)
 			{
 				strncpy(container + posInContainer + 1 - blockSize, block + 1, blockSize);
+				free(block);
+				block = (char*)malloc((blockSize + 1) * sizeof(char));
 				posInBlock = 1;
 			}
 
@@ -76,8 +78,10 @@ void encode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 			}
 			posInContainer++;
 		}
-		posInContainer = 0;
 		printAsChars(destFile, container, containerSize);
+		free(container);
+		free(block);
+		posInContainer = 0;
 	}
 }
 

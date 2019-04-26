@@ -71,7 +71,7 @@ void decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 			size_t posInBlock = 1; //1..blockSize
 			char* block = (char*)malloc(blockSize + 2); //+1 для сдвига и +1 для \0
 			block[0] = '0';
-			strncpy(block + 1, container, blockSize);
+			strncpy(block + 1, container + blockSize * i, blockSize);
 
 			//Получить строку с контрольными битами для проверки
 			char* awaitedParityBits = (char*)malloc(blockSize + 2);
@@ -91,11 +91,48 @@ void decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 				if (block[pow2(k)] != awaitedParityBits[pow2(k)])
 					corruptedBit += pow2(k);
 			}
-			if (block[corruptedBit] == '0') block[corruptedBit] = '1';
-			else block[corruptedBit] = '0';
+			if (block[corruptedBit] == '0') container[corruptedBit + blockSize * i] = '1';
+			else container[corruptedBit + blockSize * i] = '0';
+			free(block);
+			free(awaitedParityBits);
 		}
 		//Составить исходное сообщение из битов со значащей информацией, напечатать в dest
-		posInContainer = 0;
-
+		printResult(destFile, container, containerSize, blockSize);
 	}
+}
+
+void printResult(FILE* dest, char* container, size_t containerSize, size_t blockSize)
+{
+	char* result = (char*)malloc( containerSize / BITS_IN_BYTE * sizeof(char) + 1);
+	char* temp = result;
+	char ch = 0;
+	size_t size = 0; //размер полученного сообщения
+	size_t posInCh = 0;
+	size_t posInBlock = 1; //1..blockSize
+	size_t posInContainer = 0; //0..containerSize - 1
+
+	while (posInContainer < containerSize)
+	{
+		if (!isPowerOf2(posInBlock)) //это информационный бит
+		{
+			if (container[posInContainer] == '1') ch = ch | (1 << posInCh);
+			else ch = ch & ~(1 << posInCh);
+			posInCh++;
+		}
+		posInBlock++;
+		if (posInBlock == blockSize + 1) posInBlock = 1;
+
+		if (posInCh == BITS_IN_BYTE)
+		{
+			*temp = ch;
+			temp++;
+			ch = 0;
+			posInCh = 0;
+			size++;
+		}
+		posInContainer++;
+	}
+	*temp = '\0';
+	fwrite(result, size / BITS_IN_BYTE, 1, dest);
+	free(result);
 }
