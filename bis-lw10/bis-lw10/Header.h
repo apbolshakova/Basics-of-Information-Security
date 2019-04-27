@@ -13,7 +13,7 @@ void toggleParityBits(char* block, size_t num);
 BOOL isPowerOf2(int n);
 size_t getParityBitsNum(size_t blockSize);
 void printAsChars(FILE* dest, char* container, size_t size);
-void printResult(FILE* dest, char* container, size_t containerSize, size_t blockSize);
+void printResult(FILE* dest, char* container, size_t containerSize, size_t blockSize, size_t parityBitsNum, char* ch, size_t* posInCh);
 
 void encode(FILE* srcFile, FILE* resFile, size_t dataBitsNum);
 void decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum);

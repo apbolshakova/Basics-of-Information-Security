@@ -30,6 +30,8 @@ void handleDecoding()
 
 	decode(srcFile, destFile, dataBitsNum);
 	printf("Successfully decoded.\n");
+	fclose(srcFile);
+	fclose(destFile);
 }
 
 void decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
@@ -42,6 +44,9 @@ void decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 	char curCh = getc(srcFile);
 	size_t posInContainer = 0; //0..containerSize - 1
 	size_t posInCh = 0; //0..BITS_IN_BYTE - 1
+	
+	char decodedCh = 0;
+	size_t posInDecodedCh = 0;
 
 	while (!dataEnded)
 	{
@@ -91,48 +96,53 @@ void decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 				if (block[pow2(k)] != awaitedParityBits[pow2(k)])
 					corruptedBit += pow2(k);
 			}
-			if (block[corruptedBit] == '0') container[corruptedBit + blockSize * i] = '1';
-			else container[corruptedBit + blockSize * i] = '0';
+			if (corruptedBit)
+			{
+				if (block[corruptedBit] == '0') container[corruptedBit + (blockSize - 1)* i] = '1';
+				else container[corruptedBit + (blockSize - 1)* i] = '0';
+			}
 			free(block);
 			free(awaitedParityBits);
 		}
 		//Составить исходное сообщение из битов со значащей информацией, напечатать в dest
-		printResult(destFile, container, containerSize, blockSize);
+		printResult(destFile, container, containerSize, blockSize, parityBitsNum, &decodedCh, &posInDecodedCh);
+		free(container);
+		container = NULL;
+		posInContainer = 0;
 	}
 }
 
-void printResult(FILE* dest, char* container, size_t containerSize, size_t blockSize)
+void printResult(FILE* dest, char* container, size_t containerSize, size_t blockSize, size_t parityBitsNum, char* ch, size_t* posInCh)
 {
-	char* result = (char*)malloc(containerSize / BITS_IN_BYTE * sizeof(char) + 1);
+	char* result = (char*)malloc(containerSize * sizeof(char));
 	char* temp = result;
-	char ch = 0;
 	size_t size = 0; //размер полученного сообщения
-	size_t posInCh = 0;
 	size_t posInBlock = 1; //1..blockSize
 	size_t posInContainer = 0; //0..containerSize - 1
 
 	while (posInContainer < containerSize)
 	{
-		if (!isPowerOf2(posInBlock)) //это информационный бит
+		if (!isPowerOf2(posInBlock) || posInBlock == pow2(parityBitsNum)) //это информационный бит
 		{
-			if (container[posInContainer] == '1') ch = ch | (1 << posInCh);
-			else ch = ch & ~(1 << posInCh);
-			posInCh++;
+			if (container[posInContainer] == '1') *ch = *ch | (1 << *posInCh);
+			else *ch = *ch & ~(1 << *posInCh);
+			(*posInCh)++;
 		}
 		posInBlock++;
 		if (posInBlock == blockSize + 1) posInBlock = 1;
-
-		if (posInCh == BITS_IN_BYTE)
+		if (*posInCh == BITS_IN_BYTE)
 		{
-			*temp = ch;
-			temp++;
-			ch = 0;
-			posInCh = 0;
-			size++;
+			if (*ch)
+			{
+				*temp = *ch;
+				temp++;
+				size++;
+			}
+			*ch = 0;
+			*posInCh = 0;
 		}
 		posInContainer++;
 	}
-	*temp = '\0';
-	fwrite(result, size / BITS_IN_BYTE, 1, dest);
+	fwrite(result, size, 1, dest);
 	free(result);
 }
