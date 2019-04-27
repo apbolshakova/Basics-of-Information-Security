@@ -2,8 +2,7 @@
 
 size_t getParityBitsNum(size_t dataBitsNum)
 {
-	size_t result = (size_t)ceil(log2(dataBitsNum));
-	if (result < MIN_PARITY_BITS) result = MIN_PARITY_BITS; //для обработки по 8 бит
+	size_t result = (size_t)ceil(log2(dataBitsNum)) + 1;
 	return result;
 }
 

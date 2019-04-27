@@ -6,5 +6,5 @@
 #define MAX_BLOCK_SIZE 64
 #define VALID_SIZE_DIVIDER 4
 #define BITS_IN_BYTE 8
-#define MIN_PARITY_BITS 4
+#define SMALL_BLOCK 16
 #endif
