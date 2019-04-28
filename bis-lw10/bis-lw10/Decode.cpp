@@ -83,8 +83,7 @@ void decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 			for (int k = 0; k < blockSize + 1; k++) awaitedParityBits[k] = '0';
 			while (posInBlock <= blockSize)
 			{
-				if ((!isPowerOf2(posInBlock) || posInBlock == pow2(parityBitsNum)) 
-					&& block[posInBlock] == '1')
+				if (!isPowerOf2(posInBlock) && block[posInBlock] == '1')
 					toggleParityBits(awaitedParityBits, posInBlock);
 				posInBlock++;
 			}
@@ -122,7 +121,7 @@ void printResult(FILE* dest, char* container, size_t containerSize, size_t block
 
 	while (posInContainer < containerSize)
 	{
-		if (!isPowerOf2(posInBlock) || posInBlock == pow2(parityBitsNum)) //это информационный бит
+		if (!isPowerOf2(posInBlock)) //это информационный бит
 		{
 			if (container[posInContainer] == '1') *ch = *ch | (1 << *posInCh);
 			else *ch = *ch & ~(1 << *posInCh);

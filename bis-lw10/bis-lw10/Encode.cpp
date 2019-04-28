@@ -51,7 +51,7 @@ void encode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 		char* block = (char*)malloc((blockSize + 1) * sizeof(char));
 		while (posInContainer < containerSize)
 		{
-			if ((!isPowerOf2(posInBlock) || posInBlock == pow2(parityBitsNum)) && !dataEnded)
+			if (!isPowerOf2(posInBlock) && !dataEnded)
 			{
 				if (curCh % 2)
 				{
