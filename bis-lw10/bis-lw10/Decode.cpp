@@ -97,8 +97,8 @@ void decode(FILE* srcFile, FILE* destFile, size_t dataBitsNum)
 			}
 			if (corruptedBit)
 			{
-				if (block[corruptedBit] == '0') container[corruptedBit + (blockSize - 1)* i] = '1';
-				else container[corruptedBit + (blockSize - 1)* i] = '0';
+				if (block[corruptedBit] == '0') container[corruptedBit + blockSize * i - 1] = '1';
+				else container[corruptedBit + blockSize * i - 1] = '0';
 			}
 			free(block);
 			free(awaitedParityBits);
