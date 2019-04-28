@@ -93,6 +93,7 @@ void printAsChars(FILE* dest, char* container, size_t size)
 	char* temp = result;
 	char ch = 0;
 	size_t posInCh = 0;
+	size_t sizeWithoutNullChars = 0;
 	for (int i = 0; i < size; i++)
 	{
 		if (container[i] == '1') ch = ch | (1 << posInCh);
@@ -100,14 +101,19 @@ void printAsChars(FILE* dest, char* container, size_t size)
 
 		if (posInCh + 1 == BITS_IN_BYTE)
 		{
-			*temp = ch;
-			temp++;
-			ch = 0;
+			if (ch)
+			{
+				*temp = ch;
+				temp++;
+				sizeWithoutNullChars++;
+				ch = 0;
+			}
+			
 			posInCh = 0;
 		}
 		else posInCh++;
 	}
 	*temp = '\0';
-	fwrite(result, size / BITS_IN_BYTE, 1, dest);
+	fwrite(result, sizeWithoutNullChars, 1, dest);
 	free(result);
 }
