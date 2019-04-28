@@ -2,7 +2,9 @@
 
 size_t getParityBitsNum(size_t dataBitsNum)
 {
-	size_t result = (size_t)ceil(log2(dataBitsNum)) + 1;
+	size_t result = (size_t)ceil(log2(dataBitsNum));
+	if (dataBitsNum + result >= pow2(result)) //контрольных битов недостаточно
+		result++;
 	return result;
 }
 
