@@ -15,16 +15,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Encode.cpp">
+    <ClCompile Include="Decode.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Decode.cpp">
+    <ClCompile Include="Encode.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Main.cpp">
+    <ClCompile Include="Main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Misc.cpp">
+    <ClCompile Include="Misc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -76,6 +76,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -115,10 +116,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Decode.cpp" />
-    <ClCompile Include="Encode.cpp" />
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Misc.cpp" />
+    <ClCompile Include="Decode.c" />
+    <ClCompile Include="Encode.c" />
+    <ClCompile Include="Main.c" />
+    <ClCompile Include="Misc.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Constants.h" />
