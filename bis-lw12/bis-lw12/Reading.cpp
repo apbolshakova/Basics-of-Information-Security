@@ -16,11 +16,12 @@ PACL readACE(char *fileName)
 
 	for (int i = 0; i < pDacl->AceCount; i++) 
 	{
-		if (!GetAce(pDacl, i, (LPVOID *)&pAce))
+		if (!GetAce(pDacl, i, &pAce))
 		{
 			printf("ERROR in GetAce function\n");
-			return;
+			goto Cleanup;
 		}
+		printf("%i. ", i);
 		printName(pAce);
 		if (ACCESS_ALLOWED_ACE_TYPE == pAce->Header.AceType) printf("is able to\n");
 		if (ACCESS_DENIED_ACE_TYPE == pAce->Header.AceType)  printf("is not able to\n");
@@ -39,12 +40,12 @@ PACL readACE(char *fileName)
 			printf("- execute or alternatively look into the object\n");
 		printf("\n");
 	}
-	return pDacl;
-
+	
 Cleanup:
 
 	if (pSD != NULL)
 		LocalFree((HLOCAL)pSD);
 	if (pDacl != NULL)
 		LocalFree((HLOCAL)pDacl);
+	return pDacl;
 }

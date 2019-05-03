@@ -116,10 +116,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Creating.c" />
-    <ClCompile Include="Main.c" />
-    <ClCompile Include="Misc.c" />
-    <ClCompile Include="Reading.c" />
+    <ClCompile Include="Creating.cpp" />
+    <ClCompile Include="Editing.cpp" />
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Misc.cpp" />
+    <ClCompile Include="Reading.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Constants.h" />

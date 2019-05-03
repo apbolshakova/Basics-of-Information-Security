@@ -27,6 +27,7 @@ void createACE(char *fileName)
 	);
 	system("cls");
 	printf("Successfully created\n");
+	free(username);
 }
 
 DWORD AddAceToObjectsSecurityDescriptor(
@@ -92,6 +93,5 @@ Cleanup:
 		LocalFree((HLOCAL)pSD);
 	if (pNewDACL != NULL)
 		LocalFree((HLOCAL)pNewDACL);
-
 	return dwRes;
 }

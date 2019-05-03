@@ -29,7 +29,7 @@ int main()
 		{
 		case '1': createACE(fileName); break;
 		case '2': readACE(fileName); break; 
-		//case 3: changeACE(fileName); break;
+		case '3': changeACE(fileName); break;
 		default: break;
 		}
 		printf("Press enter to continue.\n");
