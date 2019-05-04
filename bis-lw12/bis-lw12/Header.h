@@ -7,8 +7,14 @@
 #include <conio.h>
 #include "Constants.h"
 
+extern char fileName_g[MAX_FILE_NAME];
+
 int exists(const char *fname);
-void printName(ACCESS_ALLOWED_ACE *pAce);
+PACL getDacl();
+char* getUsername();
+DWORD getAccessMask();
+ACCESS_MODE getAccessMode();
+int getAceIndex();
 
 DWORD AddAceToObjectsSecurityDescriptor(
 	LPTSTR pszObjName,          // name of object
@@ -19,7 +25,8 @@ DWORD AddAceToObjectsSecurityDescriptor(
 	ACCESS_MODE AccessMode,     // type of ACE
 	DWORD dwInheritance         // inheritance flags for new ACE
 );
+LPTSTR getName(ACCESS_ALLOWED_ACE *pAce);
 
-PACL readACE(char *fileName);
-void createACE(char *fileName);
-void changeACE(char *fileName);
+void printAllAces();
+void createAce(LPTSTR username);
+void editAce();
