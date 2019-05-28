@@ -17,9 +17,7 @@ typedef enum HandlingMode_
 	CODE, //common code, copy it with or without spaces
 	INLINE_COMM, //inline comment, copy it until \n or EOF
 	MULTILINE_COMM, //multiline comment, copy it until */ or EOF
-	CONST_STRING, //constant string, copy it until " but not \"
-	PREPROCESSOR, //preprocessor commands, copy it until \n or EOF
-	VAR //variable initialization, copy it until = or ;
+	CONST_STRING //constant string, copy it until " but not \"
 } mode_t;
 
 #endif

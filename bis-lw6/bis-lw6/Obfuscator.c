@@ -60,7 +60,11 @@ void fprintText(FILE* fRes, char* text, int* config)
 		if (config[DEL_SPACES] && 
 			((*text == '\n' && *(text + 1) != '#') && *(text - 1) != '>') && 
 			*(text - 1) != '"') text++;
-		if (mode != INLINE_COMM && mode != MULTILINE_COMM) fprintf(fRes, "%c", *text);
+		if (mode != INLINE_COMM && mode != MULTILINE_COMM)
+		{
+			if (config[ADD_DUMMIES] && !strncmp(text, "return", 6)) fprintf(fRes, DUMMY);
+			fprintf(fRes, "%c", *text);
+		}
 		text++;
 	}
 	printf(fRes, "\n");
