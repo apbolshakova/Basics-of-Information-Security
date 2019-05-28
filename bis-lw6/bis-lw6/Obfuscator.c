@@ -8,9 +8,7 @@ status_t handleObfuscation(FILE* fSrc, FILE* fRes, int* config)
 		printf("ERROR: unable to get source code.\n");
 		return FAIL;
 	}
-	if (config[ADD_DUMMIES]) addDummies(src);
 	if (config[CHANGE_VAR_NAMES]) changeVarNames(src);
-	if (config[DEL_SPACES]) deleteSpaces(src);
 	fprintText(fRes, src, config);
 	return SUCCESS;
 }
@@ -59,20 +57,13 @@ void fprintText(FILE* fRes, char* text, int* config)
 				mode = CODE;
 			}
 		}
+		if (config[DEL_SPACES] && 
+			((*text == '\n' && *(text + 1) != '#') && *(text - 1) != '>') && 
+			*(text - 1) != '"') text++;
 		if (mode != INLINE_COMM && mode != MULTILINE_COMM) fprintf(fRes, "%c", *text);
 		text++;
 	}
 	printf(fRes, "\n");
-}
-
-void addDummies(char* src)
-{
-	char* lastPos = src;
-	while (lastPos = strstr(lastPos, "\ndo"));
-	{
-		//addDummy(src, lastPos); //TODO
-		lastPos++;
-	}
 }
 
 void changeVarNames(char* src)
@@ -117,9 +108,4 @@ void changeVarNames(char* src)
 			lastPos = sav;
 		}
 	}
-}
-
-void deleteSpaces(char* src)
-{
-
 }

@@ -15,7 +15,4 @@ int* getConfigs();
 status_t handleObfuscation(FILE* fSrc, FILE* fRes, int* config);
 char* getSrcCode(FILE* fSrc);
 void fprintText(FILE* fRes, char* text, int* config);
-void addDummies(char* src);
 void changeVarNames(char* src);
-//void deleteComments(char* src);
-void deleteSpaces(char* src);
