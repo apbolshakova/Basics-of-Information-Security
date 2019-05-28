@@ -57,13 +57,30 @@ void fprintText(FILE* fRes, char* text, int* config)
 				mode = CODE;
 			}
 		}
-		if (config[DEL_SPACES] && 
-			((*text == '\n' && *(text + 1) != '#') && *(text - 1) != '>') && 
+		if (config[DEL_SPACES] && *text == '#' && *(text - 1) == '\n')
+		{
+			fprintf(fRes, "\n", *text);
+			do
+			{
+				fprintf(fRes, "%c", *text);
+				text++;
+			} while (*text != '\n' && *text != '\0');
+			fprintf(fRes, "%c", *text);
+			text++;
+			continue;
+		}
+		if (config[DEL_SPACES] &&
+			((*text == '\n' && *(text + 1) != '#') && *(text - 1) != '>') &&
 			*(text - 1) != '"') text++;
+
 		if (mode != INLINE_COMM && mode != MULTILINE_COMM)
 		{
-			if (config[ADD_DUMMIES] && !strncmp(text, "return", 6)) fprintf(fRes, DUMMY);
-			fprintf(fRes, "%c", *text);
+			if (config[ADD_DUMMIES] && !strncmp(text, ";\nreturn", 8))
+			{
+				fprintf(fRes, DUMMY);
+				text += 9;
+			}
+			else fprintf(fRes, "%c", *text);
 		}
 		text++;
 	}
@@ -103,6 +120,11 @@ void changeVarNames(char* src)
 			lastPos = sav;
 			while (lastPos = strstr(lastPos, oldVarName))
 			{
+				if (isLetterOrDigit(*(lastPos - 1)) || isLetterOrDigit(*(lastPos + strlen(oldVarName)))) //this is a part of word
+				{
+					lastPos++;
+					continue;
+				}
 				for (int i = 0; i < len; i++)
 				{
 					(*lastPos)++;
@@ -112,4 +134,10 @@ void changeVarNames(char* src)
 			lastPos = sav;
 		}
 	}
+}
+
+int isLetterOrDigit(char item)
+{
+	if (('A' <= item && item <= 'Z') || ('a' <= item && item <= 'z') || ('0' <= item && item <= '9')) return 1;
+	else return 0;
 }

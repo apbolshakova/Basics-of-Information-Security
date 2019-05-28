@@ -16,4 +16,4 @@ status_t handleObfuscation(FILE* fSrc, FILE* fRes, int* config);
 char* getSrcCode(FILE* fSrc);
 void fprintText(FILE* fRes, char* text, int* config);
 void changeVarNames(char* src);
-void printDummy(FILE* fRes);
+int isLetterOrDigit(char item);
