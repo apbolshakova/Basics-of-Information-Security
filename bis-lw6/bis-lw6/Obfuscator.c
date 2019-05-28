@@ -10,9 +10,8 @@ status_t handleObfuscation(FILE* fSrc, FILE* fRes, int* config)
 	}
 	if (config[ADD_DUMMIES]) addDummies(src);
 	if (config[CHANGE_VAR_NAMES]) changeVarNames(src);
-	if (config[DEL_COMMS]) deleteComments(src);
 	if (config[DEL_SPACES]) deleteSpaces(src);
-	fprintText(fRes, src);
+	fprintText(fRes, src, config);
 	return SUCCESS;
 }
 
@@ -43,12 +42,24 @@ char* getSrcCode(FILE* fSrc)
 	return res;
 }
 
-void fprintText(FILE* fRes, char* text)
+void fprintText(FILE* fRes, char* text, int* config)
 {
 	if (text == NULL) return;
+	mode_t mode = CODE;
 	while (*text)
 	{
-		fprintf(fRes, "%c", *text);
+		if (config[DEL_COMMS])
+		{
+			if (!strncmp(text, "//", 2)) mode = INLINE_COMM;
+			if (*text == '\n' && mode == INLINE_COMM) mode = CODE;
+			if (!strncmp(text, "/*", 2)) mode = MULTILINE_COMM;
+			if (!strncmp(text, "*/", 2))
+			{
+				text += 2;
+				mode = CODE;
+			}
+		}
+		if (mode != INLINE_COMM && mode != MULTILINE_COMM) fprintf(fRes, "%c", *text);
 		text++;
 	}
 	printf(fRes, "\n");
@@ -106,11 +117,6 @@ void changeVarNames(char* src)
 			lastPos = sav;
 		}
 	}
-}
-
-void deleteComments(char* src)
-{
-
 }
 
 void deleteSpaces(char* src)
